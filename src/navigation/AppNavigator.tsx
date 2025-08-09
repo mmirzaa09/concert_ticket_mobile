@@ -1,0 +1,62 @@
+import React from 'react';
+import {createStackNavigator} from '@react-navigation/stack';
+import {RootStackParamList} from '../types';
+import {COLORS} from '../constants';
+
+// Import Screens
+import OnboardingScreen from '../screens/onboarding/OnboardingScreen';
+import LoginScreen from '../screens/auth/LoginScreen';
+import RegisterScreen from '../screens/auth/RegisterScreen';
+import TabNavigator from './TabNavigator';
+
+const Stack = createStackNavigator<RootStackParamList>();
+
+const AppNavigator: React.FC = () => {
+  return (
+    <Stack.Navigator
+      initialRouteName="Onboarding"
+      screenOptions={{
+        headerStyle: {
+          backgroundColor: COLORS.primary,
+        },
+        headerTintColor: COLORS.text,
+        headerTitleStyle: {
+          fontWeight: 'bold',
+        },
+        cardStyle: {
+          backgroundColor: COLORS.background,
+        },
+      }}>
+      <Stack.Screen
+        name="Onboarding"
+        component={OnboardingScreen}
+        options={{
+          headerShown: false,
+        }}
+      />
+      <Stack.Screen
+        name="Login"
+        component={LoginScreen}
+        options={{
+          headerShown: false,
+        }}
+      />
+      <Stack.Screen
+        name="Register"
+        component={RegisterScreen}
+        options={{
+          headerShown: false,
+        }}
+      />
+      <Stack.Screen
+        name="MainTabs"
+        component={TabNavigator}
+        options={{
+          headerShown: false,
+        }}
+      />
+    </Stack.Navigator>
+  );
+};
+
+export default AppNavigator;
