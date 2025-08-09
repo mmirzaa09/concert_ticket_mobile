@@ -47,6 +47,7 @@ export const loginUser = createAsyncThunk(
         token,
       };
     } catch (error) {
+      console.log('check error:', error);
       return rejectWithValue(
         error instanceof Error ? error.message : 'Login failed',
       );

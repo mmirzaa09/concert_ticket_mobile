@@ -18,6 +18,8 @@ import {globalStyles} from '../../styles/globalStyles';
 import {isValidEmail, responsiveFontSize, spacing} from '../../utils';
 import {useAppDispatch, useAppSelector} from '../../store/hooks';
 import {registerUser, clearError} from '../../store/slices/authSlice';
+import {ErrorModal} from '../../components/common';
+import {useServiceErrorHandler} from '../../services/errorHandler';
 
 type RegisterScreenNavigationProp = StackNavigationProp<
   RootStackParamList,

@@ -18,6 +18,7 @@ import {globalStyles} from '../../styles/globalStyles';
 import {isValidEmail, responsiveFontSize, spacing} from '../../utils';
 import {useAppDispatch, useAppSelector} from '../../store/hooks';
 import {loginUser, clearError} from '../../store/slices/authSlice';
+import {useGlobalModalContext} from '../../context/GlobalModalContext';
 
 type LoginScreenNavigationProp = StackNavigationProp<
   RootStackParamList,
@@ -35,31 +36,46 @@ const LoginScreen: React.FC<Props> = ({navigation}) => {
   const [password, setPassword] = useState('');
 
   const dispatch = useAppDispatch();
-  const {isLoading, error, isAuthenticated} = useAppSelector(
-    state => state.auth,
-  );
+  const {isLoading, error} = useAppSelector(state => state.auth);
+
+  const {showError, showSuccess} = useGlobalModalContext();
 
   const handleLogin = async (): Promise<void> => {
     if (!email || !password) {
-      Alert.alert('Error', 'Please fill in all fields');
+      showError('Please fill in all fields', 'Missing Information');
       return;
     }
 
     if (!isValidEmail(email)) {
-      Alert.alert('Error', 'Please enter a valid email address');
+      showError('Please enter a valid email address', 'Invalid Email');
       return;
     }
 
     try {
       const result = await dispatch(loginUser({email, password}));
       if (loginUser.fulfilled.match(result)) {
-        Alert.alert('Success', 'Login successful!');
+        showSuccess('Login successful!', 'Success');
         navigation.navigate('MainTabs');
       } else {
-        Alert.alert('Error', error || 'Login failed. Please try again.');
+        // Extract error information from the result
+        const errorPayload = result.payload as any;
+        const statusCode = errorPayload?.status_code || 400;
+        const message =
+          errorPayload?.message || 'Login failed. Please try again.';
+
+        showError(message, 'Login Failed', statusCode, {
+          showRetryButton: true,
+          retryAction: handleLogin,
+        });
       }
-    } catch (err) {
-      Alert.alert('Error', 'Login failed. Please try again.');
+    } catch (err: any) {
+      const statusCode = err?.status_code || 500;
+      const message = err?.message || 'An unexpected error occurred';
+
+      showError(message, 'Login Failed', statusCode, {
+        showRetryButton: true,
+        retryAction: handleLogin,
+      });
     }
   };
 

@@ -7,6 +7,7 @@ import AppNavigator from './src/navigation/AppNavigator';
 import {store, persistor} from './src/store';
 import {COLORS} from './src/constants';
 import {LoadingSpinner} from './src/components';
+import {GlobalModalProvider} from './src/context/GlobalModalContext';
 
 const App: React.FC = () => {
   return (
@@ -14,14 +15,16 @@ const App: React.FC = () => {
       <PersistGate
         loading={<LoadingSpinner text="Loading..." />}
         persistor={persistor}>
-        <NavigationContainer>
-          <StatusBar
-            barStyle="light-content"
-            backgroundColor={COLORS.primary}
-            translucent={false}
-          />
-          <AppNavigator />
-        </NavigationContainer>
+        <GlobalModalProvider>
+          <NavigationContainer>
+            <StatusBar
+              barStyle="light-content"
+              backgroundColor={COLORS.primary}
+              translucent={false}
+            />
+            <AppNavigator />
+          </NavigationContainer>
+        </GlobalModalProvider>
       </PersistGate>
     </Provider>
   );

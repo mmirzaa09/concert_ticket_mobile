@@ -15,7 +15,6 @@ class ApiService {
     options: RequestInit = {},
   ): Promise<ApiResponse<T>> {
     const url = `${this.baseURL}${endpoint}`;
-    console.log('check url:', url);
     const config: RequestInit = {
       headers: {
         'Content-Type': 'application/json',
@@ -32,7 +31,7 @@ class ApiService {
         ...config,
         signal: controller.signal,
       });
-
+      console.log('check request response:', options);
       clearTimeout(timeoutId);
 
       // Check if response is JSON
@@ -53,8 +52,6 @@ class ApiService {
         // For non-JSON success responses, wrap in our format
         data = {success: true, data: textData, message: 'Success'};
       }
-
-      console.log('API Response:', data);
 
       if (!response.ok) {
         throw new Error(
@@ -81,10 +78,13 @@ class ApiService {
 
   // Auth endpoints
   async login(credentials: LoginCredentials): Promise<ApiResponse<any>> {
-    return this.request<any>(API_ENDPOINTS.LOGIN, {
+    console.log('check credentials:', credentials);
+    const result = await this.request<any>(API_ENDPOINTS.LOGIN, {
       method: 'POST',
       body: JSON.stringify(credentials),
     });
+    console.log('check result:', result);
+    return result;
   }
 
   async register(userData: {
