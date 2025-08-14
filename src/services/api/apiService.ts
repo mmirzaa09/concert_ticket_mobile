@@ -31,7 +31,6 @@ class ApiService {
         ...config,
         signal: controller.signal,
       });
-      console.log('check request response:', options);
       clearTimeout(timeoutId);
 
       // Check if response is JSON
@@ -66,7 +65,6 @@ class ApiService {
         message: data.message,
       };
     } catch (error) {
-      console.log('API Error:', error);
       if (error instanceof Error && error.name === 'AbortError') {
         throw new Error('Request timeout');
       }
@@ -78,7 +76,6 @@ class ApiService {
 
   // Auth endpoints
   async login(credentials: LoginCredentials): Promise<ApiResponse<any>> {
-    console.log('check credentials:', credentials);
     const result = await this.request<any>(API_ENDPOINTS.LOGIN, {
       method: 'POST',
       body: JSON.stringify(credentials),

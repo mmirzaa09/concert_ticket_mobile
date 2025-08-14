@@ -5,7 +5,6 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  Alert,
   ImageBackground,
   Dimensions,
   ScrollView,
@@ -18,8 +17,8 @@ import {globalStyles} from '../../styles/globalStyles';
 import {isValidEmail, responsiveFontSize, spacing} from '../../utils';
 import {useAppDispatch, useAppSelector} from '../../store/hooks';
 import {registerUser, clearError} from '../../store/slices/authSlice';
-import {ErrorModal} from '../../components/common';
-import {useServiceErrorHandler} from '../../services/errorHandler';
+import {useGlobalModalContext} from '../../context/GlobalModalContext';
+import images from '../../assets/index.ts';
 
 type RegisterScreenNavigationProp = StackNavigationProp<
   RootStackParamList,
@@ -39,29 +38,29 @@ const RegisterScreen: React.FC<Props> = ({navigation}) => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
 
+  const {showError, showSuccess} = useGlobalModalContext();
+
   const dispatch = useAppDispatch();
-  const {isLoading, error, isAuthenticated} = useAppSelector(
-    state => state.auth,
-  );
+  const {isLoading, error} = useAppSelector(state => state.auth);
 
   const handleRegister = async (): Promise<void> => {
     if (!name || !email || !password || !confirmPassword || !phoneNumber) {
-      Alert.alert('Error', 'Please fill in all fields');
+      showError('Error', 'Please fill in all fields');
       return;
     }
 
     if (!isValidEmail(email)) {
-      Alert.alert('Error', 'Please enter a valid email address');
+      showError('Error', 'Please enter a valid email address');
       return;
     }
 
     if (password.length < 8) {
-      Alert.alert('Error', 'Password must be at least 8 characters long');
+      showError('Error', 'Password must be at least 8 characters long');
       return;
     }
 
     if (password !== confirmPassword) {
-      Alert.alert('Error', 'Passwords do not match');
+      showError('Error', 'Passwords do not match');
       return;
     }
 
@@ -76,17 +75,17 @@ const RegisterScreen: React.FC<Props> = ({navigation}) => {
       );
 
       if (registerUser.fulfilled.match(result)) {
-        Alert.alert('Success', 'Registration successful!', [
+        showSuccess('Success', 'Registration successful!', [
           {
             text: 'OK',
-            onPress: () => navigation.navigate('MainTabs'),
+            onPress: () => navigation.navigate('Login'),
           },
         ]);
       } else {
-        Alert.alert('Error', error || 'Registration failed. Please try again.');
+        showError('Error', error || 'Registration failed. Please try again.');
       }
     } catch (err) {
-      Alert.alert('Error', 'Registration failed. Please try again.');
+      showError('Registration failed. Please try again.');
     }
   };
 
@@ -102,9 +101,10 @@ const RegisterScreen: React.FC<Props> = ({navigation}) => {
   return (
     <SafeAreaView style={globalStyles.container}>
       <ImageBackground
-        source={{
-          uri: 'https://images.unsplash.com/photo-1459749411175-04bf5292ceea?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80',
-        }}
+        // source={{
+        //   uri: 'https://images.unsplash.com/photo-1459749411175-04bf5292ceea?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80',
+        // }}
+        source={images.backgroundRegister}
         style={styles.backgroundImage}
         resizeMode="cover">
         <View style={styles.overlay}>

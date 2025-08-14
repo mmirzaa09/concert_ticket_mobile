@@ -19,6 +19,7 @@ import {isValidEmail, responsiveFontSize, spacing} from '../../utils';
 import {useAppDispatch, useAppSelector} from '../../store/hooks';
 import {loginUser, clearError} from '../../store/slices/authSlice';
 import {useGlobalModalContext} from '../../context/GlobalModalContext';
+import images from '../../assets/index.ts';
 
 type LoginScreenNavigationProp = StackNavigationProp<
   RootStackParamList,
@@ -95,9 +96,10 @@ const LoginScreen: React.FC<Props> = ({navigation}) => {
   return (
     <SafeAreaView style={globalStyles.container}>
       <ImageBackground
-        source={{
-          uri: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80',
-        }}
+        // source={{
+        //   uri: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80',
+        // }}
+        source={images.backgroundLogin}
         style={styles.backgroundImage}
         resizeMode="cover">
         <View style={styles.overlay}>
@@ -192,6 +194,7 @@ const styles = StyleSheet.create({
     flex: 1,
     width: width,
     height: height,
+    resizeMode: 'contain',
   },
   overlay: {
     flex: 1,

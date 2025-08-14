@@ -15,6 +15,7 @@ import {globalStyles} from '../../styles/globalStyles';
 import {responsiveFontSize, spacing} from '../../utils';
 import {useAppSelector, useAppDispatch} from '../../store/hooks';
 import {restoreUserSession} from '../../store/slices/authSlice';
+import images from '../../assets/index.ts';
 
 type OnboardingScreenNavigationProp = StackNavigationProp<
   RootStackParamList,
@@ -33,32 +34,34 @@ const OnboardingScreen: React.FC<Props> = ({navigation}) => {
     state => state.auth,
   );
 
-  useEffect(() => {
-    // Check if user is already logged in
-    const checkAuthStatus = async () => {
-      try {
-        // Restore user session from AsyncStorage
-        await dispatch(restoreUserSession());
-        // If user has valid token, redirect to main app
-        if (token && isAuthenticated) {
-          console.log('User is already logged in, token:', token);
-          navigation.navigate('MainTabs');
-        }
-      } catch (error) {
-        console.error('Error checking auth status:', error);
-      }
-    };
+  console.log('images:', images);
 
-    checkAuthStatus();
-  }, [dispatch, navigation, token, isAuthenticated]);
+  // useEffect(() => {
+  //   // Check if user is already logged in
+  //   const checkAuthStatus = async () => {
+  //     try {
+  //       // Restore user session from AsyncStorage
+  //       await dispatch(restoreUserSession());
+  //       // If user has valid token, redirect to main app
+  //       if (token && isAuthenticated) {
+  //         console.log('User is already logged in, token:', token);
+  //         navigation.navigate('MainTabs');
+  //       }
+  //     } catch (error) {
+  //       console.error('Error checking auth status:', error);
+  //     }
+  //   };
 
-  // Auto-redirect when authentication state changes
-  useEffect(() => {
-    if (isAuthenticated && token && !isLoading) {
-      console.log('User authenticated, redirecting to MainTabs');
-      navigation.navigate('MainTabs');
-    }
-  }, [isAuthenticated, token, isLoading, navigation]);
+  //   checkAuthStatus();
+  // }, [dispatch, navigation, token, isAuthenticated]);
+
+  // // Auto-redirect when authentication state changes
+  // useEffect(() => {
+  //   if (isAuthenticated && token && !isLoading) {
+  //     console.log('User authenticated, redirecting to MainTabs');
+  //     navigation.navigate('MainTabs');
+  //   }
+  // }, [isAuthenticated, token, isLoading, navigation]);
 
   const handleGetStarted = (): void => {
     navigation.navigate('Login');
@@ -67,9 +70,10 @@ const OnboardingScreen: React.FC<Props> = ({navigation}) => {
   return (
     <SafeAreaView style={globalStyles.container}>
       <ImageBackground
-        source={{
-          uri: 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80',
-        }}
+        // source={{
+        //   uri: 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80',
+        // }}
+        source={images.backgroundOnboarding}
         style={styles.backgroundImage}
         resizeMode="cover">
         <View style={styles.overlay}>
@@ -112,6 +116,7 @@ const styles = StyleSheet.create({
     flex: 1,
     width: width,
     height: height,
+    resizeMode: 'contain',
   },
   overlay: {
     flex: 1,

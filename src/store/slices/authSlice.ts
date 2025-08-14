@@ -77,7 +77,7 @@ export const registerUser = createAsyncThunk(
 
       // Transform the response to match our User interface
       const user: User = {
-        id: userResponse.id.toString(),
+        id: userResponse.id,
         email: userResponse.email,
         name: userResponse.name,
         avatar: userResponse.avatar,
