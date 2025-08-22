@@ -5,7 +5,7 @@ export const APP_CONFIG = {
   // API_BASE_URL: __DEV__
   //   ? 'http://192.168.1.9:8000'
   //   : 'https://api.queueless.com',
-  API_BASE_URL: 'http://192.168.1.131:8000/api',
+  API_BASE_URL: 'http://192.168.0.199:8000/api',
   API_TIMEOUT: 10000,
 };
 
@@ -66,9 +66,9 @@ export const API_ENDPOINTS = {
   UPDATE_PROFILE: '/users/update',
 
   // Concerts
-  CONCERTS: '/concerts',
-  CONCERT_DETAIL: '/concerts/:id',
-  SEARCH_CONCERTS: '/concerts/search',
+  CONCERTS: '/concert',
+  CONCERT_DETAIL: '/concert/:id',
+  SEARCH_CONCERTS: '/concert/search',
 
   // Tickets
   TICKETS: '/tickets',

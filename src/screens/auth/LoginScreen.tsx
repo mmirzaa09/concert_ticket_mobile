@@ -96,9 +96,6 @@ const LoginScreen: React.FC<Props> = ({navigation}) => {
   return (
     <SafeAreaView style={globalStyles.container}>
       <ImageBackground
-        // source={{
-        //   uri: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80',
-        // }}
         source={images.backgroundLogin}
         style={styles.backgroundImage}
         resizeMode="cover">

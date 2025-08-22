@@ -33,7 +33,6 @@ export const loginUser = createAsyncThunk(
         id: userData.id,
         email: userData.email,
         name: userData.name,
-        avatar: userData.avatar,
         createdAt: userData.created_at || new Date().toISOString(),
       };
 

@@ -16,6 +16,7 @@ import {globalStyles} from '../../styles/globalStyles';
 import {formatPrice, responsiveFontSize, spacing} from '../../utils';
 import {useAppDispatch, useAppSelector} from '../../store/hooks';
 import {fetchConcerts} from '../../store/slices/concertsSlice';
+import images from '../../assets';
 
 type HomeScreenNavigationProp = BottomTabNavigationProp<TabParamList, 'Home'>;
 
@@ -32,27 +33,28 @@ const HomeScreen: React.FC<Props> = ({navigation: _navigation}) => {
     dispatch(fetchConcerts());
   }, [dispatch]);
 
-  const renderConcertItem = ({item}: {item: Concert}) => (
-    <TouchableOpacity
-      style={styles.concertCard}
-      onPress={() =>
-        Alert.alert('Concert Details', `View details for ${item.title}`)
-      }>
-      <Image source={{uri: item.image}} style={styles.concertImage} />
-      <View style={styles.concertInfo}>
-        <Text style={styles.concertTitle}>{item.title}</Text>
-        <Text style={styles.concertArtist}>{item.artist}</Text>
-        <Text style={styles.concertVenue}>{item.venue}</Text>
-        <Text style={styles.concertPrice}>{formatPrice(item.price)}</Text>
-        <View style={styles.queueInfo}>
-          <Text style={styles.queueText}>Queue: {item.queueCount} people</Text>
-          <Text style={styles.availableText}>
-            {item.availableTickets} tickets left
-          </Text>
+  const renderConcertItem = ({item}: {item: Concert}) => {
+    return (
+      <TouchableOpacity
+        style={styles.concertCard}
+        onPress={() =>
+          Alert.alert('Concert Details', `View details for ${item.title}`)
+        }>
+        <Image source={images[item.image_url]} style={styles.concertImage} />
+        <View style={styles.concertInfo}>
+          <Text style={styles.concertTitle}>{item.title}</Text>
+          <Text style={styles.concertArtist}>{item.artist}</Text>
+          <Text style={styles.concertVenue}>{item.venue}</Text>
+          <Text style={styles.concertPrice}>{formatPrice(item.price)}</Text>
+          <View style={styles.queueInfo}>
+            <Text style={styles.availableText}>
+              {item.available_tickets} tickets left
+            </Text>
+          </View>
         </View>
-      </View>
-    </TouchableOpacity>
-  );
+      </TouchableOpacity>
+    );
+  };
 
   return (
     <SafeAreaView style={globalStyles.container}>

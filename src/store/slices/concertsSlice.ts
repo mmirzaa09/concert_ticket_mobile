@@ -1,5 +1,6 @@
 import {createSlice, createAsyncThunk} from '@reduxjs/toolkit';
 import {Concert} from '../../types';
+import {apiService} from '../../services/api/apiService';
 
 // Mock data
 const mockConcerts: Concert[] = [
@@ -53,8 +54,9 @@ export const fetchConcerts = createAsyncThunk(
   async (_, {rejectWithValue}) => {
     try {
       // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      return mockConcerts;
+      // await new Promise(resolve => setTimeout(resolve, 1000));
+      const response = await apiService.getConcerts();
+      return response.data;
     } catch (error) {
       return rejectWithValue(
         error instanceof Error ? error.message : 'Failed to fetch concerts',
