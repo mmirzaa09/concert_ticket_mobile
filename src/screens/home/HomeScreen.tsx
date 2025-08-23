@@ -7,10 +7,11 @@ import {
   TouchableOpacity,
   Image,
   SafeAreaView,
-  Alert,
 } from 'react-native';
 import {BottomTabNavigationProp} from '@react-navigation/bottom-tabs';
-import {TabParamList, Concert} from '../../types';
+import {CompositeNavigationProp} from '@react-navigation/native';
+import {StackNavigationProp} from '@react-navigation/stack';
+import {TabParamList, Concert, RootStackParamList} from '../../types';
 import {COLORS} from '../../constants';
 import {globalStyles} from '../../styles/globalStyles';
 import {formatPrice, responsiveFontSize, spacing} from '../../utils';
@@ -18,13 +19,16 @@ import {useAppDispatch, useAppSelector} from '../../store/hooks';
 import {fetchConcerts} from '../../store/slices/concertsSlice';
 import images from '../../assets';
 
-type HomeScreenNavigationProp = BottomTabNavigationProp<TabParamList, 'Home'>;
+type HomeScreenNavigationProp = CompositeNavigationProp<
+  BottomTabNavigationProp<TabParamList, 'Home'>,
+  StackNavigationProp<RootStackParamList>
+>;
 
 interface Props {
   navigation: HomeScreenNavigationProp;
 }
 
-const HomeScreen: React.FC<Props> = ({navigation: _navigation}) => {
+const HomeScreen: React.FC<Props> = ({navigation}) => {
   const dispatch = useAppDispatch();
   const {concerts, isLoading, error} = useAppSelector(state => state.concerts);
 
@@ -38,9 +42,9 @@ const HomeScreen: React.FC<Props> = ({navigation: _navigation}) => {
       <TouchableOpacity
         style={styles.concertCard}
         onPress={() =>
-          Alert.alert('Concert Details', `View details for ${item.title}`)
+          navigation.navigate('ConcertDetail', {concertId: item.id})
         }>
-        <Image source={images[item.image_url]} style={styles.concertImage} />
+        <Image source={images[item.image]} style={styles.concertImage} />
         <View style={styles.concertInfo}>
           <Text style={styles.concertTitle}>{item.title}</Text>
           <Text style={styles.concertArtist}>{item.artist}</Text>

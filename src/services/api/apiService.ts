@@ -1,21 +1,65 @@
-import {APP_CONFIG, API_ENDPOINTS} from '../../constants';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import {APP_CONFIG, API_ENDPOINTS, STORAGE_KEYS} from '../../constants';
 import {ApiResponse, LoginCredentials} from '../../types';
+
+// Global callback for session expiration
+let sessionExpiredCallback: (() => void) | null = null;
+
+export const setSessionExpiredCallback = (callback: () => void) => {
+  sessionExpiredCallback = callback;
+};
 
 const createApiService = () => {
   const baseURL = APP_CONFIG.API_BASE_URL;
   const timeout = APP_CONFIG.API_TIMEOUT;
 
+  // Helper function to get JWT token
+  const getAuthToken = async (): Promise<string | null> => {
+    try {
+      const token = await AsyncStorage.getItem(STORAGE_KEYS.USER_TOKEN);
+      console.log('Retrieved token:', token);
+      return token;
+    } catch (error) {
+      console.error('Error getting auth token:', error);
+      return null;
+    }
+  };
+
+  // Helper function to create authenticated headers
+  const createAuthHeaders = async (
+    additionalHeaders: Record<string, string> = {},
+  ): Promise<Record<string, string>> => {
+    const token = await getAuthToken();
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      ...additionalHeaders,
+    };
+
+    if (token) {
+      headers.Authorization = `Bearer ${token}`;
+    }
+    console.log('Auth Headers:', headers);
+    return headers;
+  };
+
   const request = async <T>(
     endpoint: string,
     options: RequestInit = {},
+    requireAuth: boolean = false,
   ): Promise<ApiResponse<T>> => {
     const url = `${baseURL}${endpoint}`;
+
+    // Create headers (with or without auth)
+    const headers = requireAuth
+      ? await createAuthHeaders(options.headers as Record<string, string>)
+      : {
+          'Content-Type': 'application/json',
+          ...(options.headers as Record<string, string>),
+        };
+
     const config: RequestInit = {
-      headers: {
-        'Content-Type': 'application/json',
-        ...options.headers,
-      },
       ...options,
+      headers,
     };
 
     try {
@@ -45,6 +89,19 @@ const createApiService = () => {
       }
 
       if (!response.ok) {
+        // Handle 401 Unauthorized specifically
+        if (response.status === 401) {
+          // Clear token and redirect to login
+          await AsyncStorage.removeItem(STORAGE_KEYS.USER_TOKEN);
+
+          // Trigger session expired callback if available
+          if (sessionExpiredCallback) {
+            sessionExpiredCallback();
+          }
+
+          throw new Error('Session expired. Please login again.');
+        }
+
         throw new Error(
           data.message || `HTTP ${response.status}: ${response.statusText}`,
         );
@@ -54,6 +111,7 @@ const createApiService = () => {
         success: data.success || true,
         data: data.data || data,
         message: data.message,
+        status_code: response.status,
       };
     } catch (error) {
       if (error instanceof Error && error.name === 'AbortError') {
@@ -66,11 +124,23 @@ const createApiService = () => {
   };
 
   return {
-    login: (credentials: LoginCredentials): Promise<ApiResponse<any>> =>
-      request<any>(API_ENDPOINTS.LOGIN, {
+    // Auth methods
+    login: async (credentials: LoginCredentials): Promise<ApiResponse<any>> => {
+      const response = await request<any>(API_ENDPOINTS.LOGIN, {
         method: 'POST',
         body: JSON.stringify(credentials),
-      }),
+      });
+
+      // Store JWT token after successful login
+      if (response.success && response.data.token) {
+        await AsyncStorage.setItem(
+          STORAGE_KEYS.USER_TOKEN,
+          response.data.token,
+        );
+      }
+
+      return response;
+    },
 
     register: (userData: {
       name: string;
@@ -83,40 +153,97 @@ const createApiService = () => {
         body: JSON.stringify(userData),
       }),
 
+    logout: async (): Promise<void> => {
+      try {
+        // Clear all authentication related data
+        await AsyncStorage.multiRemove([
+          STORAGE_KEYS.USER_TOKEN,
+          STORAGE_KEYS.USER_DATA,
+        ]);
+      } catch (error) {
+        console.error('Error during logout:', error);
+      }
+    },
+
+    // Concert methods with auth
     getConcerts: (): Promise<ApiResponse<any[]>> =>
-      request<any[]>(API_ENDPOINTS.CONCERTS, {
-        method: 'GET',
-      }),
+      request<any[]>(
+        API_ENDPOINTS.CONCERTS,
+        {
+          method: 'GET',
+        },
+        true,
+      ), // requireAuth = true
 
     getConcertById: (id: string): Promise<ApiResponse<any>> =>
-      request<any>(API_ENDPOINTS.CONCERT_DETAIL.replace(':id', id)),
+      request<any>(
+        API_ENDPOINTS.CONCERT_DETAIL.replace(':id', id),
+        {method: 'GET'},
+        false, // Public endpoint, no auth required
+      ),
 
+    // Protected endpoints
     purchaseTicket: (data: {
       concertId: string;
       quantity: number;
     }): Promise<ApiResponse<any>> =>
-      request<any>(API_ENDPOINTS.PURCHASE_TICKET, {
-        method: 'POST',
-        body: JSON.stringify(data),
-      }),
+      request<any>(
+        API_ENDPOINTS.PURCHASE_TICKET,
+        {
+          method: 'POST',
+          body: JSON.stringify(data),
+        },
+        true,
+      ),
 
     getMyTickets: (userId: string): Promise<ApiResponse<any[]>> =>
-      request<any[]>(API_ENDPOINTS.MY_TICKETS.replace(':userId', userId)),
+      request<any[]>(
+        API_ENDPOINTS.MY_TICKETS.replace(':userId', userId),
+        {method: 'GET'},
+        true,
+      ),
 
     joinQueue: (concertId: string): Promise<ApiResponse<any>> =>
-      request<any>(API_ENDPOINTS.JOIN_QUEUE, {
-        method: 'POST',
-        body: JSON.stringify({concertId}),
-      }),
+      request<any>(
+        API_ENDPOINTS.JOIN_QUEUE,
+        {
+          method: 'POST',
+          body: JSON.stringify({concertId}),
+        },
+        true,
+      ),
 
     getQueueStatus: (concertId: string): Promise<ApiResponse<any>> =>
-      request<any>(API_ENDPOINTS.QUEUE_STATUS.replace(':concertId', concertId)),
+      request<any>(
+        API_ENDPOINTS.QUEUE_STATUS.replace(':concertId', concertId),
+        {method: 'GET'},
+        true,
+      ),
 
     leaveQueue: (concertId: string): Promise<ApiResponse<any>> =>
-      request<any>(API_ENDPOINTS.LEAVE_QUEUE, {
-        method: 'POST',
-        body: JSON.stringify({concertId}),
-      }),
+      request<any>(
+        API_ENDPOINTS.LEAVE_QUEUE,
+        {
+          method: 'POST',
+          body: JSON.stringify({concertId}),
+        },
+        true,
+      ),
+
+    // Utility methods
+    isAuthenticated: async (): Promise<boolean> => {
+      const token = await getAuthToken();
+      return token !== null;
+    },
+
+    getToken: getAuthToken,
+
+    // For testing session expiration (remove in production)
+    simulateSessionExpiration: () => {
+      if (sessionExpiredCallback) {
+        sessionExpiredCallback();
+      }
+    },
   };
 };
 

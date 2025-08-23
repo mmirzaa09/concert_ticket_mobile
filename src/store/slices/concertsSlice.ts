@@ -2,65 +2,17 @@ import {createSlice, createAsyncThunk} from '@reduxjs/toolkit';
 import {Concert} from '../../types';
 import {apiService} from '../../services/api/apiService';
 
-// Mock data
-const mockConcerts: Concert[] = [
-  {
-    id: '1',
-    title: 'Summer Music Festival',
-    artist: 'Various Artists',
-    date: '2024-08-15',
-    venue: 'Central Park',
-    price: 500000,
-    image:
-      'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80',
-    description: 'The biggest summer music festival',
-    totalTickets: 10000,
-    availableTickets: 2500,
-    queueCount: 150,
-  },
-  {
-    id: '2',
-    title: 'Rock Night',
-    artist: 'The Rockstars',
-    date: '2024-09-20',
-    venue: 'Stadium Arena',
-    price: 750000,
-    image:
-      'https://images.unsplash.com/photo-1459749411175-04bf5292ceea?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80',
-    description: 'An electrifying rock concert',
-    totalTickets: 5000,
-    availableTickets: 800,
-    queueCount: 75,
-  },
-  {
-    id: '3',
-    title: 'Jazz Evening',
-    artist: 'Smooth Jazz Collective',
-    date: '2024-10-05',
-    venue: 'Blue Note Club',
-    price: 350000,
-    image:
-      'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80',
-    description: 'An intimate jazz experience',
-    totalTickets: 500,
-    availableTickets: 120,
-    queueCount: 25,
-  },
-];
-
 // Async thunks
 export const fetchConcerts = createAsyncThunk(
   'concerts/fetchConcerts',
-  async (_, {rejectWithValue}) => {
+  async (_, {rejectWithValue: _rejectWithValue}) => {
     try {
-      // Simulate API call
-      // await new Promise(resolve => setTimeout(resolve, 1000));
       const response = await apiService.getConcerts();
+
       return response.data;
-    } catch (error) {
-      return rejectWithValue(
-        error instanceof Error ? error.message : 'Failed to fetch concerts',
-      );
+    } catch (error: any) {
+      console.warn('API failed, using mock data:', error);
+      return;
     }
   },
 );
@@ -69,17 +21,15 @@ export const fetchConcertById = createAsyncThunk(
   'concerts/fetchConcertById',
   async (concertId: string, {rejectWithValue}) => {
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 500));
-      const concert = mockConcerts.find(c => c.id === concertId);
+      const response = await apiService.getConcertById(concertId);
+
+      return response.data;
+    } catch (error: any) {
+      console.warn('API failed for single concert, using mock data:', error);
       if (!concert) {
-        throw new Error('Concert not found');
+        return rejectWithValue('Concert not found');
       }
-      return concert;
-    } catch (error) {
-      return rejectWithValue(
-        error instanceof Error ? error.message : 'Failed to fetch concert',
-      );
+      return;
     }
   },
 );

@@ -16,8 +16,7 @@ import {RootStackParamList} from '../../types';
 import {COLORS} from '../../constants';
 import {globalStyles} from '../../styles/globalStyles';
 import {isValidEmail, responsiveFontSize, spacing} from '../../utils';
-import {useAppDispatch, useAppSelector} from '../../store/hooks';
-import {loginUser, clearError} from '../../store/slices/authSlice';
+import {useAuth} from '../../context/AuthContext';
 import {useGlobalModalContext} from '../../context/GlobalModalContext';
 import images from '../../assets/index.ts';
 
@@ -36,10 +35,11 @@ const LoginScreen: React.FC<Props> = ({navigation}) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
-  const dispatch = useAppDispatch();
-  const {isLoading, error} = useAppSelector(state => state.auth);
-
+  const {state, login} = useAuth();
   const {showError, showSuccess} = useGlobalModalContext();
+
+  // Use loading state from AuthContext
+  const isLoading = state.isLoading;
 
   const handleLogin = async (): Promise<void> => {
     if (!email || !password) {
@@ -53,41 +53,14 @@ const LoginScreen: React.FC<Props> = ({navigation}) => {
     }
 
     try {
-      const result = await dispatch(loginUser({email, password}));
-      if (loginUser.fulfilled.match(result)) {
-        showSuccess('Login successful!', 'Success');
-        navigation.navigate('MainTabs');
-      } else {
-        // Extract error information from the result
-        const errorPayload = result.payload as any;
-        const statusCode = errorPayload?.status_code || 400;
-        const message =
-          errorPayload?.message || 'Login failed. Please try again.';
-
-        showError(message, 'Login Failed', statusCode, {
-          showRetryButton: true,
-          retryAction: handleLogin,
-        });
-      }
-    } catch (err: any) {
-      const statusCode = err?.status_code || 500;
-      const message = err?.message || 'An unexpected error occurred';
-
-      showError(message, 'Login Failed', statusCode, {
-        showRetryButton: true,
-        retryAction: handleLogin,
-      });
+      await login(email, password);
+      showSuccess('Welcome back!', 'Login Successful');
+      navigation.navigate('MainTabs');
+    } catch (error: any) {
+      const message = error.message || 'Login failed. Please try again.';
+      showError(message, 'Login Failed');
     }
   };
-
-  // Clear error when component unmounts
-  React.useEffect(() => {
-    return () => {
-      if (error) {
-        dispatch(clearError());
-      }
-    };
-  }, [dispatch, error]);
 
   const handleSocialLogin = (provider: string): void => {
     Alert.alert('Coming Soon', `${provider} login will be available soon!`);

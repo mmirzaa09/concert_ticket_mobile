@@ -8,6 +8,23 @@ import {store, persistor} from './src/store';
 import {COLORS} from './src/constants';
 import {LoadingSpinner} from './src/components';
 import {GlobalModalProvider} from './src/context/GlobalModalContext';
+import {AuthProvider} from './src/context/AuthContext';
+import {navigationRef} from './src/services/NavigationService';
+import {useSessionManager} from './src/hooks/useSessionManager';
+import {SessionTimeoutModal} from './src/components/common/SessionTimeoutModal';
+
+// Session Manager Component
+const SessionManagerWrapper: React.FC = () => {
+  const {showSessionExpired, handleSessionExpiredConfirm} = useSessionManager();
+  
+  return (
+    <SessionTimeoutModal
+      visible={showSessionExpired}
+      onConfirm={handleSessionExpiredConfirm}
+      remainingTime={10}
+    />
+  );
+};
 
 const App: React.FC = () => {
   return (
@@ -15,16 +32,19 @@ const App: React.FC = () => {
       <PersistGate
         loading={<LoadingSpinner text="Loading..." />}
         persistor={persistor}>
-        <GlobalModalProvider>
-          <NavigationContainer>
-            <StatusBar
-              barStyle="light-content"
-              backgroundColor={COLORS.primary}
-              translucent={false}
-            />
-            <AppNavigator />
-          </NavigationContainer>
-        </GlobalModalProvider>
+        <AuthProvider>
+          <GlobalModalProvider>
+            <NavigationContainer ref={navigationRef}>
+              <StatusBar
+                barStyle="light-content"
+                backgroundColor={COLORS.primary}
+                translucent={false}
+              />
+              <SessionManagerWrapper />
+              <AppNavigator />
+            </NavigationContainer>
+          </GlobalModalProvider>
+        </AuthProvider>
       </PersistGate>
     </Provider>
   );

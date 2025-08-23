@@ -1,136 +1,177 @@
 import {useState, useCallback} from 'react';
 
-export type ModalType = 'success' | 'error' | 'warning' | 'info';
+export type ModalType = 'success' | 'error' | 'warning' | 'info' | 'confirm';
 
-interface ModalOptions {
-  showCloseButton?: boolean;
-  showConfirmButton?: boolean;
-  showRetryButton?: boolean;
-  confirmAction?: () => void;
-  retryAction?: () => void;
+export interface ModalButton {
+  text: string;
+  onPress: () => void;
+  style?: 'default' | 'cancel' | 'destructive';
 }
 
+interface ModalState {
+  isVisible: boolean;
+  modalType: ModalType;
+  title: string;
+  message: string;
+  statusCode?: number;
+  buttons: ModalButton[];
+  showCloseButton: boolean;
+  showConfirmButton: boolean;
+  showRetryButton: boolean;
+}
+
+const initialState: ModalState = {
+  isVisible: false,
+  modalType: 'info',
+  title: '',
+  message: '',
+  statusCode: undefined,
+  buttons: [],
+  showCloseButton: true,
+  showConfirmButton: false,
+  showRetryButton: false,
+};
+
 export const useGlobalModal = () => {
-  const [isVisible, setIsVisible] = useState(false);
-  const [modalType, setModalType] = useState<ModalType>('info');
-  const [title, setTitle] = useState('');
-  const [message, setMessage] = useState('');
-  const [statusCode, setStatusCode] = useState<number | undefined>(undefined);
-
-  // Button visibility states
-  const [showCloseButton, setShowCloseButton] = useState(true);
-  const [showConfirmButton, setShowConfirmButton] = useState(false);
-  const [showRetryButton, setShowRetryButton] = useState(false);
-
-  // Action states
-  const [confirmAction, setConfirmAction] = useState<(() => void) | undefined>(
-    undefined,
-  );
-  const [retryAction, setRetryAction] = useState<(() => void) | undefined>(
-    undefined,
-  );
-
-  const hideModal = useCallback(() => {
-    setIsVisible(false);
-    setConfirmAction(undefined);
-    setRetryAction(undefined);
-  }, []);
+  const [modalState, setModalState] = useState<ModalState>(initialState);
 
   const showModal = useCallback(
     (
       type: ModalType,
-      msg: string,
-      modalTitle?: string,
-      code?: number,
-      options?: ModalOptions,
+      title: string,
+      message: string,
+      buttons?: ModalButton[],
+      options?: {
+        statusCode?: number;
+        showCloseButton?: boolean;
+      },
     ) => {
-      setModalType(type);
-      setMessage(msg);
-      setTitle(modalTitle || '');
-      setStatusCode(code);
-      setIsVisible(true);
-
-      // Set button visibility
-      setShowCloseButton(options?.showCloseButton ?? true);
-      setShowConfirmButton(options?.showConfirmButton ?? false);
-      setShowRetryButton(options?.showRetryButton ?? false);
-
-      // Set actions
-      if (options?.confirmAction) {
-        setConfirmAction(() => options.confirmAction);
-      }
-      if (options?.retryAction) {
-        setRetryAction(() => options.retryAction);
-      }
+      setModalState({
+        isVisible: true,
+        modalType: type,
+        title,
+        message,
+        statusCode: options?.statusCode,
+        buttons: buttons || [],
+        showCloseButton: options?.showCloseButton ?? true,
+        showConfirmButton: false,
+        showRetryButton: false,
+      });
     },
     [],
   );
 
+  // Single button modals
   const showSuccess = useCallback(
-    (msg: string, modalTitle?: string, options?: ModalOptions) => {
-      showModal('success', msg, modalTitle, undefined, {
-        showConfirmButton: true,
-        showRetryButton: false,
-        ...options,
-      });
+    (title: string, message: string) => {
+      showModal('success', title, message);
     },
     [showModal],
   );
 
   const showError = useCallback(
-    (
-      msg: string,
-      modalTitle?: string,
-      code?: number,
-      options?: ModalOptions,
-    ) => {
-      showModal('error', msg, modalTitle, code, {
-        showRetryButton: false,
-        ...options,
-      });
+    (title: string, message: string, statusCode?: number) => {
+      showModal('error', title, message, undefined, {statusCode});
     },
     [showModal],
   );
 
   const showWarning = useCallback(
-    (msg: string, modalTitle?: string, options?: ModalOptions) => {
-      showModal('warning', msg, modalTitle, undefined, {
-        showRetryButton: false,
-        ...options,
-      });
+    (title: string, message: string) => {
+      showModal('warning', title, message);
     },
     [showModal],
   );
 
   const showInfo = useCallback(
-    (msg: string, modalTitle?: string, options?: ModalOptions) => {
-      showModal('info', msg, modalTitle, undefined, {
-        showRetryButton: false,
-        ...options,
-      });
+    (title: string, message: string) => {
+      showModal('info', title, message);
     },
     [showModal],
   );
 
-  return {
-    // State
-    isVisible,
-    modalType,
-    title,
-    message,
-    statusCode,
-    showCloseButton,
-    showConfirmButton,
-    showRetryButton,
-    confirmAction,
-    retryAction,
+  // Two button confirmation modal
+  const showConfirm = useCallback(
+    (
+      title: string,
+      message: string,
+      onConfirm: () => void,
+      onCancel?: () => void,
+      options?: {
+        confirmText?: string;
+        cancelText?: string;
+        confirmStyle?: 'default' | 'destructive';
+      },
+    ) => {
+      const buttons: ModalButton[] = [
+        {
+          text: options?.cancelText || 'Cancel',
+          onPress: () => {
+            hideModal();
+            onCancel?.();
+          },
+          style: 'cancel',
+        },
+        {
+          text: options?.confirmText || 'OK',
+          onPress: () => {
+            hideModal();
+            onConfirm();
+          },
+          style: options?.confirmStyle || 'default',
+        },
+      ];
 
-    // Actions
-    hideModal,
+      showModal('confirm', title, message, buttons, {showCloseButton: false});
+    },
+    [showModal],
+  );
+
+  // Custom modal with multiple buttons
+  const showCustom = useCallback(
+    (type: ModalType, title: string, message: string, buttons: ModalButton[]) => {
+      showModal(type, title, message, buttons, {showCloseButton: false});
+    },
+    [showModal],
+  );
+
+  const hideModal = useCallback(() => {
+    setModalState(initialState);
+  }, []);
+
+  const confirmAction = useCallback(() => {
+    if (modalState.buttons.length > 0) {
+      const confirmButton = modalState.buttons.find(btn => btn.style !== 'cancel');
+      confirmButton?.onPress();
+    }
+    hideModal();
+  }, [modalState.buttons, hideModal]);
+
+  const cancelAction = useCallback(() => {
+    if (modalState.buttons.length > 0) {
+      const cancelButton = modalState.buttons.find(btn => btn.style === 'cancel');
+      cancelButton?.onPress();
+    }
+    hideModal();
+  }, [modalState.buttons, hideModal]);
+
+  const retryAction = useCallback(() => {
+    // Handle retry logic here
+    hideModal();
+  }, [hideModal]);
+
+  return {
+    ...modalState,
     showModal,
     showSuccess,
     showError,
     showWarning,
     showInfo,
+    showConfirm,
+    showCustom,
+    hideModal,
+    confirmAction,
+    cancelAction,
+    retryAction,
   };
 };

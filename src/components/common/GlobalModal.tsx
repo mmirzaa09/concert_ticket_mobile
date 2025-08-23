@@ -6,238 +6,162 @@ import {
   TouchableOpacity,
   StyleSheet,
   Dimensions,
-  Animated,
 } from 'react-native';
 import {COLORS} from '../../constants';
 import {responsiveFontSize, spacing} from '../../utils';
+import {ModalType, ModalButton} from '../../hooks/useGlobalModal';
 
-export type ModalType = 'success' | 'error' | 'warning' | 'info';
+const {width: screenWidth} = Dimensions.get('window');
 
 interface GlobalModalProps {
   visible: boolean;
   type: ModalType;
-  title?: string;
+  title: string;
   message: string;
+  buttons: ModalButton[];
   statusCode?: number;
   onClose: () => void;
   onConfirm?: () => void;
   onRetry?: () => void;
-  confirmText?: string;
-  retryText?: string;
-  closeText?: string;
   showCloseButton?: boolean;
   showConfirmButton?: boolean;
   showRetryButton?: boolean;
 }
-
-const {width} = Dimensions.get('window');
 
 const GlobalModal: React.FC<GlobalModalProps> = ({
   visible,
   type,
   title,
   message,
+  buttons,
   statusCode,
   onClose,
   onConfirm,
   onRetry,
-  confirmText = 'OK',
-  retryText = 'Retry',
-  closeText = 'Close',
   showCloseButton = true,
   showConfirmButton = false,
   showRetryButton = false,
 }) => {
-  const scaleAnim = React.useRef(new Animated.Value(0)).current;
-
-  React.useEffect(() => {
-    if (visible) {
-      Animated.spring(scaleAnim, {
-        toValue: 1,
-        useNativeDriver: true,
-        tension: 100,
-        friction: 8,
-      }).start();
-    } else {
-      Animated.timing(scaleAnim, {
-        toValue: 0,
-        duration: 200,
-        useNativeDriver: true,
-      }).start();
-    }
-  }, [visible, scaleAnim]);
-
-  const getModalConfig = () => {
+  const getModalIcon = () => {
     switch (type) {
       case 'success':
-        return {
-          icon: '✅',
-          iconColor: COLORS.success,
-          defaultTitle: 'Success',
-        };
+        return '✅';
       case 'error':
-        return {
-          icon: getErrorIcon(),
-          iconColor: COLORS.error,
-          defaultTitle: getErrorTitle(),
-        };
+        return '❌';
       case 'warning':
-        return {
-          icon: '⚠️',
-          iconColor: COLORS.warning,
-          defaultTitle: 'Warning',
-        };
+        return '⚠️';
       case 'info':
-        return {
-          icon: 'ℹ️',
-          iconColor: COLORS.info,
-          defaultTitle: 'Information',
-        };
+        return 'ℹ️';
+      case 'confirm':
+        return '❓';
       default:
-        return {
-          icon: '📝',
-          iconColor: COLORS.textMuted,
-          defaultTitle: 'Message',
-        };
+        return 'ℹ️';
     }
   };
 
-  const getErrorIcon = () => {
-    if (statusCode) {
-      switch (statusCode) {
-        case 400:
-          return '📝';
-        case 401:
-          return '🔒';
-        case 403:
-          return '🚫';
-        case 404:
-          return '🔍';
-        case 408:
-          return '⏱️';
-        case 422:
-          return '⚠️';
-        case 429:
-          return '🚦';
-        case 500:
-          return '🔧';
-        case 502:
-        case 503:
-        case 504:
-          return '📡';
-        default:
-          return '❌';
-      }
+  const getModalColor = () => {
+    switch (type) {
+      case 'success':
+        return COLORS.success;
+      case 'error':
+        return COLORS.error;
+      case 'warning':
+        return COLORS.warning;
+      case 'info':
+        return COLORS.info;
+      case 'confirm':
+        return COLORS.primary;
+      default:
+        return COLORS.info;
     }
-    return '⚠️';
   };
 
-  const getErrorTitle = () => {
-    if (statusCode) {
-      switch (statusCode) {
-        case 400:
-          return 'Bad Request';
-        case 401:
-          return 'Authentication Required';
-        case 403:
-          return 'Access Denied';
-        case 404:
-          return 'Not Found';
-        case 408:
-          return 'Request Timeout';
-        case 422:
-          return 'Validation Error';
-        case 429:
-          return 'Too Many Requests';
-        case 500:
-          return 'Server Error';
-        case 502:
-          return 'Bad Gateway';
-        case 503:
-          return 'Service Unavailable';
-        case 504:
-          return 'Gateway Timeout';
-        default:
-          return `Error ${statusCode}`;
-      }
+  const getButtonStyle = (buttonStyle: string) => {
+    switch (buttonStyle) {
+      case 'destructive':
+        return [styles.button, styles.destructiveButton];
+      case 'cancel':
+        return [styles.button, styles.cancelButton];
+      default:
+        return [styles.button, styles.defaultButton];
     }
-    return 'Error';
   };
 
-  const config = getModalConfig();
-  const modalTitle = title || config.defaultTitle;
+  const getButtonTextStyle = (buttonStyle: string) => {
+    switch (buttonStyle) {
+      case 'destructive':
+        return [styles.buttonText, styles.destructiveButtonText];
+      case 'cancel':
+        return [styles.buttonText, styles.cancelButtonText];
+      default:
+        return [styles.buttonText, styles.defaultButtonText];
+    }
+  };
 
   const renderButtons = () => {
-    const buttons = [];
-
-    if (showRetryButton && onRetry) {
-      buttons.push(
-        <TouchableOpacity
-          key="retry"
-          style={[styles.button, styles.retryButton]}
-          onPress={onRetry}>
-          <Text style={styles.retryButtonText}>{retryText}</Text>
-        </TouchableOpacity>,
+    // If custom buttons are provided, use them
+    if (buttons && buttons.length > 0) {
+      return (
+        <View style={styles.customButtonContainer}>
+          {buttons.map((button, index) => (
+            <TouchableOpacity
+              key={index}
+              style={getButtonStyle(button.style || 'default')}
+              onPress={button.onPress}>
+              <Text style={getButtonTextStyle(button.style || 'default')}>
+                {button.text}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
       );
     }
 
-    if (showConfirmButton && onConfirm) {
-      buttons.push(
-        <TouchableOpacity
-          key="confirm"
-          style={[styles.button, styles.confirmButton]}
-          onPress={onConfirm}>
-          <Text style={styles.confirmButtonText}>{confirmText}</Text>
-        </TouchableOpacity>,
-      );
-    }
-
-    if (showCloseButton) {
-      buttons.push(
-        <TouchableOpacity
-          key="close"
-          style={[
-            styles.button,
-            styles.closeButton,
-            buttons.length === 0 && styles.singleButton,
-          ]}
-          onPress={onClose}>
-          <Text style={styles.closeButtonText}>{closeText}</Text>
-        </TouchableOpacity>,
-      );
-    }
-
-    return buttons;
+    // Default button rendering for legacy support
+    return (
+      <View style={styles.buttonContainer}>
+        {showRetryButton && onRetry && (
+          <TouchableOpacity style={styles.retryButton} onPress={onRetry}>
+            <Text style={styles.retryButtonText}>Retry</Text>
+          </TouchableOpacity>
+        )}
+        {showConfirmButton && onConfirm && (
+          <TouchableOpacity style={styles.confirmButton} onPress={onConfirm}>
+            <Text style={styles.confirmButtonText}>OK</Text>
+          </TouchableOpacity>
+        )}
+        {showCloseButton && (
+          <TouchableOpacity style={styles.closeButton} onPress={onClose}>
+            <Text style={styles.closeButtonText}>
+              {showConfirmButton ? 'Cancel' : 'OK'}
+            </Text>
+          </TouchableOpacity>
+        )}
+      </View>
+    );
   };
 
   return (
     <Modal
       transparent
-      visible={visible}
       animationType="fade"
+      visible={visible}
       onRequestClose={onClose}>
       <View style={styles.overlay}>
-        <Animated.View
-          style={[
-            styles.modalContainer,
-            {
-              transform: [{scale: scaleAnim}],
-            },
-          ]}>
-          <View
-            style={[
-              styles.iconContainer,
-              {backgroundColor: config.iconColor + '20'},
-            ]}>
-            <Text style={styles.modalIcon}>{config.icon}</Text>
+        <View style={styles.modalContainer}>
+          <View style={[styles.iconContainer, {backgroundColor: getModalColor()}]}>
+            <Text style={styles.icon}>{getModalIcon()}</Text>
           </View>
-
-          <Text style={styles.title}>{modalTitle}</Text>
-
+          
+          <Text style={styles.title}>{title}</Text>
           <Text style={styles.message}>{message}</Text>
+          
+          {statusCode && (
+            <Text style={styles.statusCode}>Error Code: {statusCode}</Text>
+          )}
 
-          <View style={styles.buttonContainer}>{renderButtons()}</View>
-        </Animated.View>
+          {renderButtons()}
+        </View>
       </View>
     </Modal>
   );
@@ -246,26 +170,18 @@ const GlobalModal: React.FC<GlobalModalProps> = ({
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: spacing.lg,
+    padding: spacing.lg,
   },
   modalContainer: {
     backgroundColor: COLORS.surface,
     borderRadius: 20,
     padding: spacing.xl,
     alignItems: 'center',
-    maxWidth: width * 0.9,
-    minWidth: width * 0.8,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 10,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 10,
-    elevation: 10,
+    maxWidth: screenWidth * 0.85,
+    minWidth: screenWidth * 0.7,
   },
   iconContainer: {
     width: 60,
@@ -275,65 +191,109 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: spacing.lg,
   },
-  modalIcon: {
-    fontSize: 30,
+  icon: {
+    fontSize: responsiveFontSize(30),
   },
   title: {
     fontSize: responsiveFontSize(20),
     fontWeight: 'bold',
     color: COLORS.text,
-    marginBottom: spacing.md,
     textAlign: 'center',
+    marginBottom: spacing.md,
   },
   message: {
     fontSize: responsiveFontSize(16),
     color: COLORS.textSecondary,
     textAlign: 'center',
     lineHeight: 24,
-    marginBottom: spacing.xl,
+    marginBottom: spacing.lg,
   },
+  statusCode: {
+    fontSize: responsiveFontSize(12),
+    color: COLORS.textMuted,
+    marginBottom: spacing.lg,
+  },
+  // Custom button styles
+  customButtonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+    gap: spacing.md,
+  },
+  button: {
+    flex: 1,
+    paddingVertical: spacing.md,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  defaultButton: {
+    backgroundColor: COLORS.primary,
+  },
+  cancelButton: {
+    backgroundColor: COLORS.surface,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+  destructiveButton: {
+    backgroundColor: COLORS.error,
+  },
+  buttonText: {
+    fontSize: responsiveFontSize(16),
+    fontWeight: '600',
+  },
+  defaultButtonText: {
+    color: COLORS.surface,
+  },
+  cancelButtonText: {
+    color: COLORS.text,
+  },
+  destructiveButtonText: {
+    color: COLORS.surface,
+  },
+  // Legacy button styles
   buttonContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     width: '100%',
-    flexWrap: 'wrap',
-  },
-  button: {
-    flex: 1,
-    borderRadius: 12,
-    paddingVertical: spacing.md,
-    alignItems: 'center',
-    marginHorizontal: spacing.xs,
-    minWidth: 80,
-  },
-  singleButton: {
-    marginHorizontal: 0,
-  },
-  confirmButton: {
-    backgroundColor: COLORS.success,
-  },
-  confirmButtonText: {
-    fontSize: responsiveFontSize(16),
-    fontWeight: 'bold',
-    color: COLORS.text,
-  },
-  retryButton: {
-    backgroundColor: COLORS.primary,
-  },
-  retryButtonText: {
-    fontSize: responsiveFontSize(16),
-    fontWeight: 'bold',
-    color: COLORS.text,
+    gap: spacing.md,
   },
   closeButton: {
-    backgroundColor: 'transparent',
+    flex: 1,
+    backgroundColor: COLORS.surface,
     borderWidth: 1,
-    borderColor: COLORS.textMuted,
+    borderColor: COLORS.border,
+    paddingVertical: spacing.md,
+    borderRadius: 12,
+    alignItems: 'center',
   },
   closeButtonText: {
+    color: COLORS.text,
     fontSize: responsiveFontSize(16),
-    fontWeight: '500',
-    color: COLORS.textMuted,
+    fontWeight: '600',
+  },
+  confirmButton: {
+    flex: 1,
+    backgroundColor: COLORS.primary,
+    paddingVertical: spacing.md,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  confirmButtonText: {
+    color: COLORS.surface,
+    fontSize: responsiveFontSize(16),
+    fontWeight: '600',
+  },
+  retryButton: {
+    flex: 1,
+    backgroundColor: COLORS.warning,
+    paddingVertical: spacing.md,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  retryButtonText: {
+    color: COLORS.surface,
+    fontSize: responsiveFontSize(16),
+    fontWeight: '600',
   },
 });
 

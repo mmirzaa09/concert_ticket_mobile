@@ -7,6 +7,7 @@ import {COLORS} from '../constants';
 import OnboardingScreen from '../screens/onboarding/OnboardingScreen';
 import LoginScreen from '../screens/auth/LoginScreen';
 import RegisterScreen from '../screens/auth/RegisterScreen';
+import {ConcertDetailScreen} from '../screens/concerts';
 import TabNavigator from './TabNavigator';
 
 const Stack = createStackNavigator<RootStackParamList>();
@@ -51,6 +52,13 @@ const AppNavigator: React.FC = () => {
       <Stack.Screen
         name="MainTabs"
         component={TabNavigator}
+        options={{
+          headerShown: false,
+        }}
+      />
+      <Stack.Screen
+        name="ConcertDetail"
+        component={ConcertDetailScreen}
         options={{
           headerShown: false,
         }}

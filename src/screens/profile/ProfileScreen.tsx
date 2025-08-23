@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React from 'react';
 import {
   View,
   Text,
@@ -10,10 +10,13 @@ import {
   Alert,
 } from 'react-native';
 import {BottomTabNavigationProp} from '@react-navigation/bottom-tabs';
-import {TabParamList, User} from '../../types';
+import {TabParamList} from '../../types';
 import {COLORS} from '../../constants';
 import {globalStyles} from '../../styles/globalStyles';
 import {responsiveFontSize, spacing} from '../../utils';
+import {useAuth} from '../../context/AuthContext';
+import {NavigationService} from '../../services/NavigationService';
+import {useGlobalModalContext} from '../../context/GlobalModalContext';
 
 type ProfileScreenNavigationProp = BottomTabNavigationProp<
   TabParamList,
@@ -24,18 +27,16 @@ interface Props {
   navigation: ProfileScreenNavigationProp;
 }
 
-// Mock user data
-const mockUser: User = {
-  id: '1',
-  email: 'john.doe@example.com',
-  name: 'John Doe',
-  avatar:
-    'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80',
-  createdAt: '2024-01-15',
-};
-
 const ProfileScreen: React.FC<Props> = ({navigation: _navigation}) => {
-  const [user] = useState<User>(mockUser);
+  const {state, logout} = useAuth();
+  const {showConfirm} = useGlobalModalContext();
+
+  // Get user from auth context
+  const user = state.user;
+
+  // Default avatar if user doesn't have one
+  const defaultAvatar =
+    'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80';
 
   const handleEditProfile = () => {
     Alert.alert('Coming Soon', 'Profile editing will be available soon!');
@@ -46,24 +47,26 @@ const ProfileScreen: React.FC<Props> = ({navigation: _navigation}) => {
   };
 
   const handleLogout = () => {
-    Alert.alert(
+    showConfirm(
       'Logout',
       'Are you sure you want to logout?',
-      [
-        {
-          text: 'Cancel',
-          style: 'cancel',
-        },
-        {
-          text: 'Logout',
-          style: 'destructive',
-          onPress: () => {
-            // TODO: Implement actual logout logic
-            Alert.alert('Logged Out', 'You have been logged out successfully');
-          },
-        },
-      ],
-      {cancelable: false},
+      async () => {
+        try {
+          await logout();
+          NavigationService.reset('Login');
+        } catch (error) {
+          Alert.alert('Error', 'Failed to logout. Please try again.');
+          console.error('Logout error:', error);
+        }
+      },
+      () => {
+        console.log('User cancelled logout');
+      },
+      {
+        confirmText: 'Logout',
+        cancelText: 'Cancel',
+        confirmStyle: 'destructive',
+      },
     );
   };
 
@@ -99,12 +102,26 @@ const ProfileScreen: React.FC<Props> = ({navigation: _navigation}) => {
     },
   ];
 
+  // Show loading or error state if user is not available
+  if (!user) {
+    return (
+      <SafeAreaView style={globalStyles.container}>
+        <View style={[styles.container, styles.loadingContainer]}>
+          <Text style={styles.userName}>Loading user profile...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   return (
     <SafeAreaView style={globalStyles.container}>
       <ScrollView contentContainerStyle={styles.container}>
         <View style={styles.header}>
           <View style={styles.avatarContainer}>
-            <Image source={{uri: user.avatar}} style={styles.avatar} />
+            <Image
+              source={{uri: user.avatar || defaultAvatar}}
+              style={styles.avatar}
+            />
             <TouchableOpacity
               style={styles.editAvatarButton}
               onPress={handleEditProfile}>
@@ -169,6 +186,10 @@ const ProfileScreen: React.FC<Props> = ({navigation: _navigation}) => {
 const styles = StyleSheet.create({
   container: {
     flexGrow: 1,
+  },
+  loadingContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   header: {
     backgroundColor: COLORS.primary,

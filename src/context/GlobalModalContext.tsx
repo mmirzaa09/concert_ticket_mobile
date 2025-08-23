@@ -26,6 +26,7 @@ export const GlobalModalProvider: React.FC<GlobalModalProviderProps> = ({
         type={modalState.modalType}
         title={modalState.title}
         message={modalState.message}
+        buttons={modalState.buttons}
         statusCode={modalState.statusCode}
         onClose={modalState.hideModal}
         onConfirm={modalState.confirmAction}
