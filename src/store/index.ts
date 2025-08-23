@@ -12,7 +12,7 @@ import ticketsReducer from './slices/ticketsSlice';
 const persistConfig = {
   key: 'root',
   storage: AsyncStorage,
-  whitelist: ['auth'], // Only persist auth state
+  whitelist: ['concerts', 'tickets'], // Remove 'auth' from whitelist since we're using AuthContext
 };
 
 // Root reducer

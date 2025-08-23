@@ -28,7 +28,7 @@ interface Props {
 }
 
 const ProfileScreen: React.FC<Props> = ({navigation: _navigation}) => {
-  const {state, logout} = useAuth();
+  const {state, logout, checkAuthStatus} = useAuth();
   const {showConfirm} = useGlobalModalContext();
 
   // Get user from auth context
@@ -52,8 +52,19 @@ const ProfileScreen: React.FC<Props> = ({navigation: _navigation}) => {
       'Are you sure you want to logout?',
       async () => {
         try {
+          console.log('Before logout - checking auth status...');
+          await checkAuthStatus();
+
+          // Use AuthContext logout method
           await logout();
-          NavigationService.reset('Login');
+
+          console.log('After logout - checking auth status...');
+          await checkAuthStatus();
+
+          // Small delay to ensure AsyncStorage operations complete
+          setTimeout(() => {
+            NavigationService.reset('Login');
+          }, 100);
         } catch (error) {
           Alert.alert('Error', 'Failed to logout. Please try again.');
           console.error('Logout error:', error);

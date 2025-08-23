@@ -107,6 +107,12 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   register: (name: string, email: string, password: string) => Promise<void>;
+  checkAuthStatus: () => Promise<{
+    hasToken: boolean;
+    hasUserData: boolean;
+    hasReduxPersist: boolean;
+    isAuthenticated: boolean;
+  } | null>;
 }
 
 // Create Context
@@ -300,23 +306,84 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({children}) => {
 
   const logout = async (): Promise<void> => {
     try {
-      // Call API service logout to clear storage
-      await apiService.logout();
-
-      // Clear user data from AsyncStorage
-      await AsyncStorage.removeItem(STORAGE_KEYS.USER_DATA);
-
-      // Update local state
+      console.log('Starting logout process...');
+      
+      // Update local state immediately to prevent UI issues
       dispatch({type: 'LOGOUT'});
+
+      // Clear all authentication related data from AsyncStorage
+      await AsyncStorage.multiRemove([
+        STORAGE_KEYS.USER_TOKEN,
+        STORAGE_KEYS.USER_DATA,
+      ]);
+
+      // Also clear any Redux persist data to prevent conflicts
+      await AsyncStorage.removeItem('persist:root');
+      await AsyncStorage.removeItem('persist:auth');
+
+      console.log('AsyncStorage cleared successfully');
+      
+      // Optional: Call server to invalidate token (if your API supports it)
+      // This can fail without breaking the logout process
+      try {
+        // Note: apiService.logout() only clears local storage, not server-side
+        await apiService.logout();
+        console.log('API logout completed');
+      } catch (apiError) {
+        console.warn(
+          'API logout failed, but local logout continues:',
+          apiError,
+        );
+      }
     } catch (error) {
       console.error('Logout error:', error);
-      // Even if API call fails, clear local state and storage
-      try {
-        await AsyncStorage.removeItem(STORAGE_KEYS.USER_DATA);
-      } catch (storageError) {
-        console.error('Storage cleanup error:', storageError);
-      }
+      
+      // Force logout even if storage cleanup fails
       dispatch({type: 'LOGOUT'});
+      
+      // Try individual cleanup as fallback
+      try {
+        await AsyncStorage.removeItem(STORAGE_KEYS.USER_TOKEN);
+        await AsyncStorage.removeItem(STORAGE_KEYS.USER_DATA);
+        await AsyncStorage.removeItem('persist:root');
+        await AsyncStorage.removeItem('persist:auth');
+        console.log('Fallback storage cleanup completed');
+      } catch (fallbackError) {
+        console.error('Fallback storage cleanup failed:', fallbackError);
+      }
+    }
+  };
+
+  // Utility method to check current auth status
+  const checkAuthStatus = async () => {
+    try {
+      const token = await AsyncStorage.getItem(STORAGE_KEYS.USER_TOKEN);
+      const userData = await AsyncStorage.getItem(STORAGE_KEYS.USER_DATA);
+      const persistRoot = await AsyncStorage.getItem('persist:root');
+      const persistAuth = await AsyncStorage.getItem('persist:auth');
+      
+      console.log('=== Auth Status Check ===');
+      console.log('Token exists:', !!token);
+      console.log(
+        'Token value:',
+        token ? `${token.substring(0, 20)}...` : null,
+      );
+      console.log('User data exists:', !!userData);
+      console.log('Redux persist:root exists:', !!persistRoot);
+      console.log('Redux persist:auth exists:', !!persistAuth);
+      console.log('Current state.isAuthenticated:', state.isAuthenticated);
+      console.log('Current state.user:', state.user ? state.user.email : null);
+      console.log('=========================');
+      
+      return {
+        hasToken: !!token,
+        hasUserData: !!userData,
+        hasReduxPersist: !!persistRoot || !!persistAuth,
+        isAuthenticated: state.isAuthenticated,
+      };
+    } catch (error) {
+      console.error('Error checking auth status:', error);
+      return null;
     }
   };
 
@@ -325,6 +392,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({children}) => {
     login,
     logout,
     register,
+    checkAuthStatus,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
