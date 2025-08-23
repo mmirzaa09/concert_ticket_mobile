@@ -16,7 +16,7 @@ import {SessionTimeoutModal} from './src/components/common/SessionTimeoutModal';
 // Session Manager Component
 const SessionManagerWrapper: React.FC = () => {
   const {showSessionExpired, handleSessionExpiredConfirm} = useSessionManager();
-  
+
   return (
     <SessionTimeoutModal
       visible={showSessionExpired}

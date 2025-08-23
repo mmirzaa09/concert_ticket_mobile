@@ -133,11 +133,29 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({children}) => {
       const userData = await AsyncStorage.getItem(STORAGE_KEYS.USER_DATA);
 
       if (token && userData) {
-        const user = JSON.parse(userData);
-        dispatch({
-          type: 'INIT_SUCCESS',
-          payload: {user, token},
-        });
+        try {
+          const user = JSON.parse(userData);
+          // Validate user object has required fields
+          if (user && user.id && user.email && user.name) {
+            dispatch({
+              type: 'INIT_SUCCESS',
+              payload: {user, token},
+            });
+          } else {
+            await AsyncStorage.multiRemove([
+              STORAGE_KEYS.USER_TOKEN,
+              STORAGE_KEYS.USER_DATA,
+            ]);
+            dispatch({type: 'INIT_FAILURE'});
+          }
+        } catch (parseError) {
+          // Clear corrupted data
+          await AsyncStorage.multiRemove([
+            STORAGE_KEYS.USER_TOKEN,
+            STORAGE_KEYS.USER_DATA,
+          ]);
+          dispatch({type: 'INIT_FAILURE'});
+        }
       } else {
         dispatch({type: 'INIT_FAILURE'});
       }
@@ -153,8 +171,42 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({children}) => {
       // Call real API
       const response = await apiService.login({email, password});
 
+      // Debug: Log the actual response structure
+
       if (response.success && response.data) {
-        const {token, user} = response.data;
+        // Handle different possible response structures
+        let user;
+        let token;
+
+        // Check if data has token and user properties
+        if (response.data.token && response.data.user) {
+          token = response.data.token;
+          user = response.data.user;
+        }
+        // Check if data has token and other user fields directly
+        else if (response.data.token) {
+          token = response.data.token;
+          // Create user object from response data
+          user = {
+            id: response.data.id || response.data.user_id || '1',
+            email: response.data.email || email,
+            name: response.data.name || response.data.username || 'User',
+            avatar: response.data.avatar || response.data.profile_picture,
+            createdAt:
+              response.data.created_at ||
+              response.data.createdAt ||
+              new Date().toISOString(),
+          };
+        }
+        // Fallback if structure is different
+        else {
+          throw new Error('Invalid response format from server');
+        }
+
+        // Validate that we have required user data
+        if (!user || !token) {
+          throw new Error('Missing user data or token in response');
+        }
 
         // Store user data in AsyncStorage
         await AsyncStorage.setItem(
@@ -190,8 +242,42 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({children}) => {
         phone_number: '', // You might want to collect this in registration form
       });
 
+      // Debug: Log the actual response structure
+
       if (response.success && response.data) {
-        const {token, user} = response.data;
+        // Handle different possible response structures (same as login)
+        let user;
+        let token;
+
+        // Check if data has token and user properties
+        if (response.data.token && response.data.user) {
+          token = response.data.token;
+          user = response.data.user;
+        }
+        // Check if data has token and other user fields directly
+        else if (response.data.token) {
+          token = response.data.token;
+          // Create user object from response data
+          user = {
+            id: response.data.id || response.data.user_id || '1',
+            email: response.data.email || email,
+            name: response.data.name || response.data.username || name,
+            avatar: response.data.avatar || response.data.profile_picture,
+            createdAt:
+              response.data.created_at ||
+              response.data.createdAt ||
+              new Date().toISOString(),
+          };
+        }
+        // Fallback if structure is different
+        else {
+          throw new Error('Invalid response format from server');
+        }
+
+        // Validate that we have required user data
+        if (!user || !token) {
+          throw new Error('Missing user data or token in response');
+        }
 
         // Store user data in AsyncStorage
         await AsyncStorage.setItem(

@@ -38,13 +38,15 @@ const HomeScreen: React.FC<Props> = ({navigation}) => {
   }, [dispatch]);
 
   const renderConcertItem = ({item}: {item: Concert}) => {
+    console.log('Rendering concert item:', item);
+    console.log('Rendering concert item:', images);
     return (
       <TouchableOpacity
         style={styles.concertCard}
         onPress={() =>
           navigation.navigate('ConcertDetail', {concertId: item.id})
         }>
-        <Image source={images[item.image]} style={styles.concertImage} />
+        <Image source={images[item.image_url]} style={styles.concertImage} />
         <View style={styles.concertInfo}>
           <Text style={styles.concertTitle}>{item.title}</Text>
           <Text style={styles.concertArtist}>{item.artist}</Text>
