@@ -179,7 +179,7 @@ const createApiService = () => {
       request<any>(
         API_ENDPOINTS.CONCERT_DETAIL.replace(':id', id),
         {method: 'GET'},
-        false, // Public endpoint, no auth required
+        true, // Public endpoint, no auth required
       ),
 
     // Protected endpoints

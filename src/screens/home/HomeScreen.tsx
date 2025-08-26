@@ -38,8 +38,6 @@ const HomeScreen: React.FC<Props> = ({navigation}) => {
   }, [dispatch]);
 
   const renderConcertItem = ({item}: {item: Concert}) => {
-    console.log('Rendering concert item:', item);
-    console.log('Rendering concert item:', images);
     return (
       <TouchableOpacity
         style={styles.concertCard}

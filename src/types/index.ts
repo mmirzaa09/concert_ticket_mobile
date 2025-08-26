@@ -32,11 +32,33 @@ export interface Concert {
   date: string;
   venue: string;
   price: number;
-  image: string;
+  image_url: string; // Match backend field name
   description: string;
-  totalTickets: number;
-  availableTickets: number;
-  queueCount: number;
+  total_tickets: number; // Match backend field name
+  available_tickets: number; // Match backend field name
+  status: number; // 0 = inactive, 1 = active
+  id_organizer: string; // Match backend field name
+  created_at?: string;
+  updated_at?: string;
+  queueCount?: number; // For frontend display
+}
+
+// Concert API Response Types
+export interface ConcertResponse {
+  id: string;
+  title: string;
+  artist: string;
+  date: string;
+  venue: string;
+  price: number;
+  image_url: string;
+  description: string;
+  total_tickets: number;
+  available_tickets: number;
+  status: number;
+  id_organizer: string;
+  created_at: string;
+  updated_at: string;
 }
 
 // Ticket Types

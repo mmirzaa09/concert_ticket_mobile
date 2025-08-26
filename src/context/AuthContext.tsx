@@ -307,7 +307,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({children}) => {
   const logout = async (): Promise<void> => {
     try {
       console.log('Starting logout process...');
-      
+
       // Update local state immediately to prevent UI issues
       dispatch({type: 'LOGOUT'});
 
@@ -322,7 +322,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({children}) => {
       await AsyncStorage.removeItem('persist:auth');
 
       console.log('AsyncStorage cleared successfully');
-      
+
       // Optional: Call server to invalidate token (if your API supports it)
       // This can fail without breaking the logout process
       try {
@@ -337,10 +337,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({children}) => {
       }
     } catch (error) {
       console.error('Logout error:', error);
-      
+
       // Force logout even if storage cleanup fails
       dispatch({type: 'LOGOUT'});
-      
+
       // Try individual cleanup as fallback
       try {
         await AsyncStorage.removeItem(STORAGE_KEYS.USER_TOKEN);
@@ -361,7 +361,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({children}) => {
       const userData = await AsyncStorage.getItem(STORAGE_KEYS.USER_DATA);
       const persistRoot = await AsyncStorage.getItem('persist:root');
       const persistAuth = await AsyncStorage.getItem('persist:auth');
-      
+
       console.log('=== Auth Status Check ===');
       console.log('Token exists:', !!token);
       console.log(
@@ -374,7 +374,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({children}) => {
       console.log('Current state.isAuthenticated:', state.isAuthenticated);
       console.log('Current state.user:', state.user ? state.user.email : null);
       console.log('=========================');
-      
+
       return {
         hasToken: !!token,
         hasUserData: !!userData,

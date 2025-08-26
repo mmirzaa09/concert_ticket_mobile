@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useState, useEffect} from 'react';
 import {
   View,
   Text,
@@ -6,17 +6,16 @@ import {
   TouchableOpacity,
   StyleSheet,
   ScrollView,
-  Alert,
-  ActivityIndicator,
+  SafeAreaView,
 } from 'react-native';
 import {RouteProp, useRoute} from '@react-navigation/native';
 import {StackNavigationProp} from '@react-navigation/stack';
 import {RootStackParamList} from '../../types';
+import {COLORS} from '../../constants';
+import {responsiveFontSize, spacing} from '../../utils';
 import {useAppDispatch, useAppSelector} from '../../store/hooks';
 import {fetchConcertById} from '../../store/slices/concertsSlice';
-import {useGlobalModalContext} from '../../context/GlobalModalContext';
-import {formatPrice, responsiveFontSize, spacing} from '../../utils';
-import {COLORS} from '../../constants';
+import images from '../../assets';
 
 type ConcertDetailScreenRouteProp = RouteProp<
   RootStackParamList,
@@ -31,9 +30,18 @@ interface Props {
   navigation: ConcertDetailScreenNavigationProp;
 }
 
+const formatPrice = (price: number): string => {
+  return new Intl.NumberFormat('id-ID', {
+    style: 'currency',
+    currency: 'IDR',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(price);
+};
+
 const formatDate = (dateString: string): string => {
   const date = new Date(dateString);
-  return date.toLocaleDateString('en-US', {
+  return date.toLocaleDateString('id-ID', {
     weekday: 'long',
     year: 'numeric',
     month: 'long',
@@ -41,210 +49,246 @@ const formatDate = (dateString: string): string => {
   });
 };
 
+const formatTime = (dateString: string): string => {
+  const date = new Date(dateString);
+  return date.toLocaleTimeString('id-ID', {
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+};
+
 const ConcertDetailScreen: React.FC<Props> = ({navigation}) => {
   const route = useRoute<ConcertDetailScreenRouteProp>();
   const {concertId} = route.params;
-
   const dispatch = useAppDispatch();
-  const {selectedConcert, isLoading, error} = useAppSelector(
-    state => state.concerts,
-  );
-  const {showError, showSuccess} = useGlobalModalContext();
+  const {selectedConcert} = useAppSelector(state => state.concerts);
 
-  const [isJoiningQueue, setIsJoiningQueue] = useState(false);
   const [userInQueue, setUserInQueue] = useState(false);
+  const [isJoiningQueue, setIsJoiningQueue] = useState(false);
+
+  const concert = selectedConcert;
 
   useEffect(() => {
-    if (concertId) {
-      dispatch(fetchConcertById(concertId));
-    }
-  }, [dispatch, concertId]);
-
-  useEffect(() => {
-    if (error) {
-      showError(error, 'Error');
-    }
-  }, [error, showError]);
+    dispatch(fetchConcertById(concertId));
+  }, [concertId, dispatch]);
 
   const handleJoinQueue = async () => {
-    if (!selectedConcert) {
-      return;
-    }
-
     setIsJoiningQueue(true);
-    try {
-      // Call your API to join queue
-      // await apiService.joinQueue(selectedConcert.id);
+    // Simulate API call
+    setTimeout(() => {
       setUserInQueue(true);
-      showSuccess('Successfully joined the queue!', 'Queue Joined');
-    } catch (queueError: any) {
-      showError(queueError.message || 'Failed to join queue', 'Queue Error');
-    } finally {
       setIsJoiningQueue(false);
-    }
+    }, 1000);
   };
 
   const handleLeaveQueue = async () => {
-    if (!selectedConcert) {
-      return;
-    }
-
-    try {
-      // await apiService.leaveQueue(selectedConcert.id);
-      setUserInQueue(false);
-      showSuccess('You have left the queue', 'Queue Left');
-    } catch (queueError: any) {
-      showError(queueError.message || 'Failed to leave queue', 'Queue Error');
-    }
+    setUserInQueue(false);
   };
 
   const handlePurchaseTicket = () => {
-    if (!selectedConcert) {
-      return;
-    }
-
-    if (selectedConcert.availableTickets <= 0) {
-      showError('No tickets available', 'Sold Out');
-      return;
-    }
-
     // Navigate to purchase screen or show purchase modal
-    Alert.alert(
-      'Purchase Ticket',
-      `Would you like to purchase a ticket for ${selectedConcert.title}?`,
-      [
-        {text: 'Cancel', style: 'cancel'},
-        {
-          text: 'Purchase',
-          onPress: () => {
-            // Navigate to purchase screen
-            // navigation.navigate('PurchaseTicket', {concertId: selectedConcert.id});
-            showSuccess('Purchase functionality coming soon!', 'Info');
-          },
-        },
-      ],
-    );
   };
 
-  if (isLoading) {
-    return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={COLORS.gold} />
-        <Text style={styles.loadingText}>Loading concert details...</Text>
-      </View>
-    );
-  }
+  const getAvailabilityPercentage = (): number => {
+    if (concert.total_tickets === 0) {
+      return 0;
+    }
+    return (concert.available_tickets / concert.total_tickets) * 100;
+  };
 
-  if (!selectedConcert) {
-    return (
-      <View style={styles.errorContainer}>
-        <Text style={styles.errorText}>Concert not found</Text>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => navigation.goBack()}>
-          <Text style={styles.backButtonText}>Go Back</Text>
-        </TouchableOpacity>
-      </View>
-    );
-  }
+  const isAvailable = (): boolean => {
+    return concert.available_tickets > 0 && concert.status === 1;
+  };
 
   return (
-    <ScrollView style={styles.container}>
-      <View style={styles.imageContainer}>
-        <Image
-          source={{uri: selectedConcert.image}}
-          style={styles.concertImage}
-          resizeMode="cover"
-        />
-        <TouchableOpacity
-          style={styles.backButtonOverlay}
-          onPress={() => navigation.goBack()}>
-          <Text style={styles.backButtonText}>←</Text>
-        </TouchableOpacity>
-      </View>
+    <SafeAreaView style={styles.container}>
+      <ScrollView showsVerticalScrollIndicator={false}>
+        {/* Header Image */}
+        <View style={styles.imageContainer}>
+          <Image
+            source={images[concert.image_url]}
+            style={styles.concertImage}
+            resizeMode="cover"
+          />
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => navigation.goBack()}>
+            <Text style={styles.backButtonText}>←</Text>
+          </TouchableOpacity>
 
-      <View style={styles.contentContainer}>
-        <Text style={styles.title}>{selectedConcert.title}</Text>
-        <Text style={styles.artist}>{selectedConcert.artist}</Text>
-
-        <View style={styles.infoSection}>
-          <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>📅 Date:</Text>
-            <Text style={styles.infoValue}>
-              {formatDate(selectedConcert.date)}
-            </Text>
-          </View>
-
-          <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>📍 Venue:</Text>
-            <Text style={styles.infoValue}>{selectedConcert.venue}</Text>
-          </View>
-
-          <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>💰 Price:</Text>
-            <Text style={styles.price}>
-              {formatPrice(selectedConcert.price)}
+          {/* Status Badge */}
+          <View
+            style={[
+              styles.statusBadge,
+              isAvailable() ? styles.availableBadge : styles.soldOutBadge,
+            ]}>
+            <Text style={styles.statusBadgeText}>
+              {isAvailable() ? 'Available' : 'Sold Out'}
             </Text>
           </View>
         </View>
 
-        <View style={styles.availabilitySection}>
-          <View style={styles.availabilityRow}>
-            <Text style={styles.availabilityLabel}>Available Tickets:</Text>
-            <Text
-              style={[
-                styles.availabilityValue,
-                selectedConcert.availableTickets <= 0 && styles.soldOut,
-              ]}>
-              {selectedConcert.availableTickets} /{' '}
-              {selectedConcert.totalTickets}
-            </Text>
+        {/* Content */}
+        <View style={styles.contentContainer}>
+          {/* Title and Artist */}
+          <View style={styles.titleSection}>
+            <Text style={styles.title}>{concert.title}</Text>
+            <Text style={styles.artist}>by {concert.artist}</Text>
           </View>
 
-          <View style={styles.availabilityRow}>
-            <Text style={styles.availabilityLabel}>Queue Count:</Text>
-            <Text style={styles.queueCount}>
-              {selectedConcert.queueCount} people waiting
-            </Text>
-          </View>
-        </View>
-
-        <View style={styles.descriptionSection}>
-          <Text style={styles.descriptionTitle}>About This Concert</Text>
-          <Text style={styles.description}>{selectedConcert.description}</Text>
-        </View>
-
-        <View style={styles.actionSection}>
-          {selectedConcert.availableTickets > 0 ? (
-            <TouchableOpacity
-              style={styles.purchaseButton}
-              onPress={handlePurchaseTicket}>
-              <Text style={styles.purchaseButtonText}>Purchase Ticket</Text>
-            </TouchableOpacity>
-          ) : (
-            <View style={styles.soldOutContainer}>
-              <Text style={styles.soldOutText}>SOLD OUT</Text>
-              {!userInQueue ? (
-                <TouchableOpacity
-                  style={styles.queueButton}
-                  onPress={handleJoinQueue}
-                  disabled={isJoiningQueue}>
-                  <Text style={styles.queueButtonText}>
-                    {isJoiningQueue ? 'Joining...' : 'Join Waiting Queue'}
+          {/* Event Info */}
+          <View style={styles.infoSection}>
+            <View style={styles.infoCard}>
+              <View style={styles.infoRow}>
+                <View style={styles.iconContainer}>
+                  <Text style={styles.icon}>📅</Text>
+                </View>
+                <View style={styles.infoContent}>
+                  <Text style={styles.infoLabel}>Date</Text>
+                  <Text style={styles.infoValue}>
+                    {formatDate(concert.date)}
                   </Text>
-                </TouchableOpacity>
-              ) : (
-                <TouchableOpacity
-                  style={styles.leaveQueueButton}
-                  onPress={handleLeaveQueue}>
-                  <Text style={styles.leaveQueueButtonText}>Leave Queue</Text>
-                </TouchableOpacity>
+                </View>
+              </View>
+
+              <View style={styles.infoRow}>
+                <View style={styles.iconContainer}>
+                  <Text style={styles.icon}>🕒</Text>
+                </View>
+                <View style={styles.infoContent}>
+                  <Text style={styles.infoLabel}>Time</Text>
+                  <Text style={styles.infoValue}>
+                    {formatTime(concert.date)} WIB
+                  </Text>
+                </View>
+              </View>
+
+              <View style={styles.infoRow}>
+                <View style={styles.iconContainer}>
+                  <Text style={styles.icon}>📍</Text>
+                </View>
+                <View style={styles.infoContent}>
+                  <Text style={styles.infoLabel}>Venue</Text>
+                  <Text style={styles.infoValue}>{concert.venue}</Text>
+                </View>
+              </View>
+
+              <View style={styles.infoRow}>
+                <View style={styles.iconContainer}>
+                  <Text style={styles.icon}>💰</Text>
+                </View>
+                <View style={styles.infoContent}>
+                  <Text style={styles.infoLabel}>Price</Text>
+                  <Text style={styles.price}>{formatPrice(concert.price)}</Text>
+                </View>
+              </View>
+            </View>
+          </View>
+
+          {/* Availability Info */}
+          <View style={styles.availabilitySection}>
+            <Text style={styles.sectionTitle}>Ticket Availability</Text>
+            <View style={styles.availabilityCard}>
+              <View style={styles.availabilityHeader}>
+                <Text style={styles.availableCount}>
+                  {concert.available_tickets} tickets remaining
+                </Text>
+                <Text style={styles.totalCount}>
+                  of {concert.total_tickets} total
+                </Text>
+              </View>
+
+              {/* Progress Bar */}
+              <View style={styles.progressBarContainer}>
+                <View style={styles.progressBarBackground}>
+                  <View
+                    style={[
+                      styles.progressBarFill,
+                      {width: `${getAvailabilityPercentage()}%`},
+                    ]}
+                  />
+                </View>
+                <Text style={styles.progressText}>
+                  {getAvailabilityPercentage().toFixed(1)}% available
+                </Text>
+              </View>
+
+              {concert.queueCount > 0 && (
+                <View style={styles.queueInfo}>
+                  <Text style={styles.queueText}>
+                    👥 {concert.queueCount} people in waiting queue
+                  </Text>
+                </View>
               )}
             </View>
-          )}
+          </View>
+
+          {/* Description */}
+          <View style={styles.descriptionSection}>
+            <Text style={styles.sectionTitle}>About This Event</Text>
+            <View style={styles.descriptionCard}>
+              <Text style={styles.description}>{concert.description}</Text>
+            </View>
+          </View>
+
+          {/* Action Buttons */}
+          <View style={styles.actionSection}>
+            {isAvailable() ? (
+              <TouchableOpacity
+                style={styles.purchaseButton}
+                onPress={handlePurchaseTicket}>
+                <Text style={styles.purchaseButtonText}>
+                  Purchase Ticket - {formatPrice(concert.price)}
+                </Text>
+              </TouchableOpacity>
+            ) : (
+              <View style={styles.soldOutContainer}>
+                <View style={styles.soldOutBanner}>
+                  <Text style={styles.soldOutText}>🎫 SOLD OUT</Text>
+                  <Text style={styles.soldOutSubtext}>
+                    All tickets have been sold
+                  </Text>
+                </View>
+
+                {!userInQueue ? (
+                  <TouchableOpacity
+                    style={styles.queueButton}
+                    onPress={handleJoinQueue}
+                    disabled={isJoiningQueue}>
+                    <Text style={styles.queueButtonText}>
+                      {isJoiningQueue
+                        ? '⏳ Joining Queue...'
+                        : '🎯 Join Waiting Queue'}
+                    </Text>
+                  </TouchableOpacity>
+                ) : (
+                  <View style={styles.inQueueContainer}>
+                    <View style={styles.inQueueBanner}>
+                      <Text style={styles.inQueueText}>
+                        ✅ You're in the queue!
+                      </Text>
+                      <Text style={styles.inQueueSubtext}>
+                        We'll notify you if tickets become available
+                      </Text>
+                    </View>
+                    <TouchableOpacity
+                      style={styles.leaveQueueButton}
+                      onPress={handleLeaveQueue}>
+                      <Text style={styles.leaveQueueButtonText}>
+                        Leave Queue
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
+              </View>
+            )}
+          </View>
+
+          {/* Bottom Spacing */}
+          <View style={styles.bottomSpacing} />
         </View>
-      </View>
-    </ScrollView>
+      </ScrollView>
+    </SafeAreaView>
   );
 };
 
@@ -252,30 +296,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: COLORS.background,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: COLORS.background,
-  },
-  loadingText: {
-    marginTop: spacing.md,
-    fontSize: responsiveFontSize(16),
-    color: COLORS.textSecondary,
-  },
-  errorContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: COLORS.background,
-    padding: spacing.lg,
-  },
-  errorText: {
-    fontSize: responsiveFontSize(18),
-    color: COLORS.error,
-    marginBottom: spacing.lg,
-    textAlign: 'center',
   },
   imageContainer: {
     position: 'relative',
@@ -285,111 +305,174 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
   },
-  backButtonOverlay: {
+  backButton: {
     position: 'absolute',
-    top: 40,
+    top: 50,
     left: 20,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    borderRadius: 20,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
     width: 40,
     height: 40,
-    justifyContent: 'center',
+    borderRadius: 20,
     alignItems: 'center',
-  },
-  backButton: {
-    backgroundColor: COLORS.gold,
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.sm,
-    borderRadius: 8,
+    justifyContent: 'center',
   },
   backButtonText: {
     color: COLORS.text,
-    fontSize: responsiveFontSize(18),
+    fontSize: responsiveFontSize(20),
+    fontWeight: 'bold',
+  },
+  statusBadge: {
+    position: 'absolute',
+    top: 50,
+    right: 20,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+  },
+  availableBadge: {
+    backgroundColor: COLORS.success,
+  },
+  soldOutBadge: {
+    backgroundColor: COLORS.error,
+  },
+  statusBadgeText: {
+    color: COLORS.text,
+    fontSize: responsiveFontSize(12),
     fontWeight: 'bold',
   },
   contentContainer: {
-    padding: spacing.lg,
+    flex: 1,
+    backgroundColor: COLORS.background,
+    marginTop: -20,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    paddingHorizontal: spacing.lg,
+  },
+  titleSection: {
+    paddingTop: spacing.lg,
+    marginBottom: spacing.lg,
   },
   title: {
     fontSize: responsiveFontSize(28),
     fontWeight: 'bold',
     color: COLORS.text,
     marginBottom: spacing.xs,
+    lineHeight: 34,
   },
   artist: {
-    fontSize: responsiveFontSize(20),
+    fontSize: responsiveFontSize(18),
     color: COLORS.gold,
-    marginBottom: spacing.lg,
     fontWeight: '600',
   },
   infoSection: {
+    marginBottom: spacing.xl,
+  },
+  infoCard: {
     backgroundColor: COLORS.surface,
-    borderRadius: 12,
-    padding: spacing.md,
-    marginBottom: spacing.lg,
+    borderRadius: 16,
+    padding: spacing.lg,
   },
   infoRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: spacing.sm,
+    marginBottom: spacing.md,
+  },
+  iconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: COLORS.card,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: spacing.md,
+  },
+  icon: {
+    fontSize: responsiveFontSize(20),
+  },
+  infoContent: {
+    flex: 1,
   },
   infoLabel: {
-    fontSize: responsiveFontSize(16),
-    color: COLORS.textSecondary,
-    flex: 1,
+    fontSize: responsiveFontSize(14),
+    color: COLORS.textMuted,
+    marginBottom: 2,
   },
   infoValue: {
     fontSize: responsiveFontSize(16),
     color: COLORS.text,
     fontWeight: '600',
-    flex: 2,
-    textAlign: 'right',
   },
   price: {
     fontSize: responsiveFontSize(18),
     color: COLORS.gold,
     fontWeight: 'bold',
-    flex: 2,
-    textAlign: 'right',
   },
   availabilitySection: {
+    marginBottom: spacing.xl,
+  },
+  sectionTitle: {
+    fontSize: responsiveFontSize(20),
+    fontWeight: 'bold',
+    color: COLORS.text,
+    marginBottom: spacing.md,
+  },
+  availabilityCard: {
     backgroundColor: COLORS.surface,
-    borderRadius: 12,
-    padding: spacing.md,
-    marginBottom: spacing.lg,
+    borderRadius: 16,
+    padding: spacing.lg,
   },
-  availabilityRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: spacing.xs,
+  availabilityHeader: {
+    marginBottom: spacing.md,
   },
-  availabilityLabel: {
-    fontSize: responsiveFontSize(16),
-    color: COLORS.textSecondary,
-  },
-  availabilityValue: {
-    fontSize: responsiveFontSize(16),
+  availableCount: {
+    fontSize: responsiveFontSize(18),
     fontWeight: 'bold',
     color: COLORS.success,
   },
-  soldOut: {
-    color: COLORS.error,
+  totalCount: {
+    fontSize: responsiveFontSize(14),
+    color: COLORS.textSecondary,
+    marginTop: 2,
   },
-  queueCount: {
-    fontSize: responsiveFontSize(16),
+  progressBarContainer: {
+    marginBottom: spacing.md,
+  },
+  progressBarBackground: {
+    height: 8,
+    backgroundColor: COLORS.card,
+    borderRadius: 4,
+    overflow: 'hidden',
+    marginBottom: spacing.xs,
+  },
+  progressBarFill: {
+    height: '100%',
+    backgroundColor: COLORS.gold,
+    borderRadius: 4,
+  },
+  progressText: {
+    fontSize: responsiveFontSize(12),
+    color: COLORS.textMuted,
+    textAlign: 'right',
+  },
+  queueInfo: {
+    backgroundColor: COLORS.warning + '20',
+    borderRadius: 8,
+    padding: spacing.sm,
+    borderLeftWidth: 3,
+    borderLeftColor: COLORS.warning,
+  },
+  queueText: {
+    fontSize: responsiveFontSize(14),
     color: COLORS.warning,
     fontWeight: '600',
   },
   descriptionSection: {
     marginBottom: spacing.xl,
   },
-  descriptionTitle: {
-    fontSize: responsiveFontSize(20),
-    fontWeight: 'bold',
-    color: COLORS.text,
-    marginBottom: spacing.sm,
+  descriptionCard: {
+    backgroundColor: COLORS.surface,
+    borderRadius: 16,
+    padding: spacing.lg,
   },
   description: {
     fontSize: responsiveFontSize(16),
@@ -397,13 +480,21 @@ const styles = StyleSheet.create({
     color: COLORS.textSecondary,
   },
   actionSection: {
-    marginBottom: spacing.xl,
+    marginBottom: spacing.lg,
   },
   purchaseButton: {
     backgroundColor: COLORS.gold,
-    paddingVertical: spacing.md,
-    borderRadius: 12,
+    borderRadius: 16,
+    paddingVertical: spacing.lg,
     alignItems: 'center',
+    shadowColor: COLORS.gold,
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
   },
   purchaseButtonText: {
     color: COLORS.background,
@@ -413,35 +504,80 @@ const styles = StyleSheet.create({
   soldOutContainer: {
     alignItems: 'center',
   },
+  soldOutBanner: {
+    backgroundColor: COLORS.error + '20',
+    borderRadius: 12,
+    padding: spacing.md,
+    alignItems: 'center',
+    marginBottom: spacing.md,
+    width: '100%',
+    borderWidth: 1,
+    borderColor: COLORS.error + '40',
+  },
   soldOutText: {
-    fontSize: responsiveFontSize(24),
+    fontSize: responsiveFontSize(20),
     fontWeight: 'bold',
     color: COLORS.error,
-    marginBottom: spacing.md,
+  },
+  soldOutSubtext: {
+    fontSize: responsiveFontSize(14),
+    color: COLORS.textMuted,
+    marginTop: 4,
   },
   queueButton: {
     backgroundColor: COLORS.warning,
+    borderRadius: 16,
     paddingVertical: spacing.md,
-    paddingHorizontal: spacing.lg,
-    borderRadius: 12,
+    paddingHorizontal: spacing.xl,
     alignItems: 'center',
+    width: '100%',
   },
   queueButtonText: {
     color: COLORS.background,
     fontSize: responsiveFontSize(16),
     fontWeight: 'bold',
   },
-  leaveQueueButton: {
-    backgroundColor: COLORS.error,
-    paddingVertical: spacing.md,
-    paddingHorizontal: spacing.lg,
-    borderRadius: 12,
+  inQueueContainer: {
+    width: '100%',
     alignItems: 'center',
   },
-  leaveQueueButtonText: {
-    color: COLORS.text,
-    fontSize: responsiveFontSize(16),
+  inQueueBanner: {
+    backgroundColor: COLORS.success + '20',
+    borderRadius: 12,
+    padding: spacing.md,
+    alignItems: 'center',
+    marginBottom: spacing.md,
+    width: '100%',
+    borderWidth: 1,
+    borderColor: COLORS.success + '40',
+  },
+  inQueueText: {
+    fontSize: responsiveFontSize(18),
     fontWeight: 'bold',
+    color: COLORS.success,
+  },
+  inQueueSubtext: {
+    fontSize: responsiveFontSize(14),
+    color: COLORS.textMuted,
+    marginTop: 4,
+    textAlign: 'center',
+  },
+  leaveQueueButton: {
+    backgroundColor: COLORS.card,
+    borderRadius: 12,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.lg,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: COLORS.error,
+  },
+  leaveQueueButtonText: {
+    color: COLORS.error,
+    fontSize: responsiveFontSize(14),
+    fontWeight: '600',
+  },
+  bottomSpacing: {
+    height: spacing.xl,
   },
 });
 

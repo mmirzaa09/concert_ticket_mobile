@@ -18,12 +18,15 @@ export const useErrorModal = (): UseErrorModalReturn => {
   const [statusCode, setStatusCode] = useState<number | undefined>(undefined);
   const [retry, setRetry] = useState<(() => void) | undefined>(undefined);
 
-  const showError = useCallback((message: string, title = 'Error', code?: number) => {
-    setErrorMessage(message);
-    setErrorTitle(title);
-    setStatusCode(code);
-    setIsVisible(true);
-  }, []);
+  const showError = useCallback(
+    (message: string, title = 'Error', code?: number) => {
+      setErrorMessage(message);
+      setErrorTitle(title);
+      setStatusCode(code);
+      setIsVisible(true);
+    },
+    [],
+  );
 
   const hideError = useCallback(() => {
     setIsVisible(false);
@@ -49,7 +52,9 @@ export const useErrorModal = (): UseErrorModalReturn => {
 };
 
 // Helper function to format API errors
-export const formatApiError = (error: any): {message: string; statusCode?: number} => {
+export const formatApiError = (
+  error: any,
+): {message: string; statusCode?: number} => {
   // Handle your API response format
   if (error && typeof error === 'object') {
     // Your API format: {"data": null, "message": "Invalid credentials", "status": "Unauthorized", "status_code": 401}
