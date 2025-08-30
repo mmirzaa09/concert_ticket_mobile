@@ -86,6 +86,7 @@ const ConcertDetailScreen: React.FC<Props> = ({navigation}) => {
   };
 
   const handlePurchaseTicket = () => {
+    navigation.navigate('ConcertInquiryScreen', {concert: concert});
     // Navigate to purchase screen or show purchase modal
   };
 
@@ -113,7 +114,12 @@ const ConcertDetailScreen: React.FC<Props> = ({navigation}) => {
           <TouchableOpacity
             style={styles.backButton}
             onPress={() => navigation.goBack()}>
-            <Text style={styles.backButtonText}>←</Text>
+            {/* <Text style={styles.backButtonText}>←</Text> */}
+            <Image
+              source={images.arrowLeft}
+              style={{width: 20, height: 20, tintColor: COLORS.text}}
+              resizeMode="contain"
+            />
           </TouchableOpacity>
 
           {/* Status Badge */}

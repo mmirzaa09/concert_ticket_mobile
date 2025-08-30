@@ -64,9 +64,6 @@ const HomeScreen: React.FC<Props> = ({navigation}) => {
     <SafeAreaView style={globalStyles.container}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Discover Concerts</Text>
-        <Text style={styles.headerSubtitle}>
-          Find your next musical adventure
-        </Text>
       </View>
 
       {error ? (

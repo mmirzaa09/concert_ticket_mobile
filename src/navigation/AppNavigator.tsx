@@ -7,7 +7,7 @@ import {COLORS} from '../constants';
 import OnboardingScreen from '../screens/onboarding/OnboardingScreen';
 import LoginScreen from '../screens/auth/LoginScreen';
 import RegisterScreen from '../screens/auth/RegisterScreen';
-import {ConcertDetailScreen} from '../screens/concerts';
+import {ConcertDetailScreen, ConcertInquiryScreen} from '../screens/concerts';
 import TabNavigator from './TabNavigator';
 
 const Stack = createStackNavigator<RootStackParamList>();
@@ -61,6 +61,13 @@ const AppNavigator: React.FC = () => {
         component={ConcertDetailScreen}
         options={{
           headerShown: false,
+        }}
+      />
+      <Stack.Screen
+        name="ConcertInquiryScreen"
+        component={ConcertInquiryScreen}
+        options={{
+          title: 'Confirm Your Ticket Purchase',
         }}
       />
     </Stack.Navigator>
