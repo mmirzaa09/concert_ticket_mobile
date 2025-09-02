@@ -17,7 +17,7 @@ import {globalStyles} from '../../styles/globalStyles';
 import {formatPrice, responsiveFontSize, spacing} from '../../utils';
 import {useAppDispatch, useAppSelector} from '../../store/hooks';
 import {fetchConcerts} from '../../store/slices/concertsSlice';
-import images from '../../assets';
+import {APP_CONFIG} from '../../constants';
 
 type HomeScreenNavigationProp = CompositeNavigationProp<
   BottomTabNavigationProp<TabParamList, 'Home'>,
@@ -44,7 +44,10 @@ const HomeScreen: React.FC<Props> = ({navigation}) => {
         onPress={() =>
           navigation.navigate('ConcertDetail', {concertId: item.id})
         }>
-        <Image source={images[item.image_url]} style={styles.concertImage} />
+        <Image
+          source={{uri: `${APP_CONFIG.API_IMAGE}${item.image_url}`}}
+          style={styles.concertImage}
+        />
         <View style={styles.concertInfo}>
           <Text style={styles.concertTitle}>{item.title}</Text>
           <Text style={styles.concertArtist}>{item.artist}</Text>

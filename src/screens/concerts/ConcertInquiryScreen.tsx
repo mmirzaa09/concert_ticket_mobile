@@ -13,8 +13,8 @@ import {StackNavigationProp} from '@react-navigation/stack';
 import {RootStackParamList} from '../../types';
 import {COLORS} from '../../constants';
 import {responsiveFontSize, spacing} from '../../utils';
-import images from '../../assets';
 import {useAuth} from '../../context/AuthContext';
+import {APP_CONFIG} from '../../constants';
 
 // Navigation types
 export type ConcertPurchaseInquiryDetailScreenRouteProp = RouteProp<
@@ -63,26 +63,24 @@ const ConcertInquiryScreen: React.FC<Props> = ({navigation}) => {
 
   const user = state.user;
 
-  useEffect(() => {
-    console.log('Concert data:', concert);
-    console.log('state auth', state);
-  }, [concert]);
-
   const handleDecrease = () => {
-    if (ticketCount > 1) setTicketCount(ticketCount - 1);
+    if (ticketCount > 1) {
+      setTicketCount(ticketCount - 1);
+    }
   };
   const handleIncrease = () => {
-    if (ticketCount < concert.available_tickets)
+    if (ticketCount < concert.available_tickets) {
       setTicketCount(ticketCount + 1);
+    }
   };
 
   const totalPrice = concert.price * ticketCount;
 
   const handleProceed = () => {
     const payloadData = {
-      userId: user?.id,
+      idUser: user?.id,
       nameUser: user?.name,
-      concertId: concert.id,
+      idConcert: concert.id,
       quantity: ticketCount,
       totalPrice: totalPrice,
     };
@@ -100,7 +98,7 @@ const ConcertInquiryScreen: React.FC<Props> = ({navigation}) => {
         {/* <Text style={styles.title}>Confirm Your Ticket Purchase</Text> */}
         <View style={styles.card}>
           <Image
-            source={images[concert.image_url]}
+            source={{uri: `${APP_CONFIG.API_IMAGE}${concert.image_url}`}}
             style={styles.concertImage}
             resizeMode="cover"
           />

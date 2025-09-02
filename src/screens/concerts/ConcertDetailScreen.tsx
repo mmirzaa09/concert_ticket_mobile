@@ -16,6 +16,7 @@ import {responsiveFontSize, spacing} from '../../utils';
 import {useAppDispatch, useAppSelector} from '../../store/hooks';
 import {fetchConcertById} from '../../store/slices/concertsSlice';
 import images from '../../assets';
+import {APP_CONFIG} from '../../constants';
 
 type ConcertDetailScreenRouteProp = RouteProp<
   RootStackParamList,
@@ -66,10 +67,13 @@ const ConcertDetailScreen: React.FC<Props> = ({navigation}) => {
   const [userInQueue, setUserInQueue] = useState(false);
   const [isJoiningQueue, setIsJoiningQueue] = useState(false);
 
-  const concert = selectedConcert;
+  const [concert, setConcert] = useState();
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     dispatch(fetchConcertById(concertId));
+    setConcert(selectedConcert);
+    setIsLoading(false);
   }, [concertId, dispatch]);
 
   const handleJoinQueue = async () => {
@@ -98,202 +102,196 @@ const ConcertDetailScreen: React.FC<Props> = ({navigation}) => {
   };
 
   const isAvailable = (): boolean => {
+    console.log('check concert:', concert);
     return concert.available_tickets > 0 && concert.status === 1;
   };
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView showsVerticalScrollIndicator={false}>
-        {/* Header Image */}
-        <View style={styles.imageContainer}>
-          <Image
-            source={images[concert.image_url]}
-            style={styles.concertImage}
-            resizeMode="cover"
-          />
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => navigation.goBack()}>
-            {/* <Text style={styles.backButtonText}>←</Text> */}
+      {isLoading ? null : (
+        <ScrollView showsVerticalScrollIndicator={false}>
+          <View style={styles.imageContainer}>
             <Image
-              source={images.arrowLeft}
-              style={{width: 20, height: 20, tintColor: COLORS.text}}
-              resizeMode="contain"
+              source={{uri: `${APP_CONFIG.API_IMAGE}${concert.image_url}`}}
+              style={styles.concertImage}
+              resizeMode="cover"
             />
-          </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.backButton}
+              onPress={() => navigation.goBack()}>
+              <Image
+                source={images.arrowLeft}
+                style={styles.backArrow}
+                resizeMode="contain"
+              />
+            </TouchableOpacity>
 
-          {/* Status Badge */}
-          <View
-            style={[
-              styles.statusBadge,
-              isAvailable() ? styles.availableBadge : styles.soldOutBadge,
-            ]}>
-            <Text style={styles.statusBadgeText}>
-              {isAvailable() ? 'Available' : 'Sold Out'}
-            </Text>
-          </View>
-        </View>
-
-        {/* Content */}
-        <View style={styles.contentContainer}>
-          {/* Title and Artist */}
-          <View style={styles.titleSection}>
-            <Text style={styles.title}>{concert.title}</Text>
-            <Text style={styles.artist}>by {concert.artist}</Text>
-          </View>
-
-          {/* Event Info */}
-          <View style={styles.infoSection}>
-            <View style={styles.infoCard}>
-              <View style={styles.infoRow}>
-                <View style={styles.iconContainer}>
-                  <Text style={styles.icon}>📅</Text>
-                </View>
-                <View style={styles.infoContent}>
-                  <Text style={styles.infoLabel}>Date</Text>
-                  <Text style={styles.infoValue}>
-                    {formatDate(concert.date)}
-                  </Text>
-                </View>
-              </View>
-
-              <View style={styles.infoRow}>
-                <View style={styles.iconContainer}>
-                  <Text style={styles.icon}>🕒</Text>
-                </View>
-                <View style={styles.infoContent}>
-                  <Text style={styles.infoLabel}>Time</Text>
-                  <Text style={styles.infoValue}>
-                    {formatTime(concert.date)} WIB
-                  </Text>
-                </View>
-              </View>
-
-              <View style={styles.infoRow}>
-                <View style={styles.iconContainer}>
-                  <Text style={styles.icon}>📍</Text>
-                </View>
-                <View style={styles.infoContent}>
-                  <Text style={styles.infoLabel}>Venue</Text>
-                  <Text style={styles.infoValue}>{concert.venue}</Text>
-                </View>
-              </View>
-
-              <View style={styles.infoRow}>
-                <View style={styles.iconContainer}>
-                  <Text style={styles.icon}>💰</Text>
-                </View>
-                <View style={styles.infoContent}>
-                  <Text style={styles.infoLabel}>Price</Text>
-                  <Text style={styles.price}>{formatPrice(concert.price)}</Text>
-                </View>
-              </View>
+            <View
+              style={[
+                styles.statusBadge,
+                isAvailable() ? styles.availableBadge : styles.soldOutBadge,
+              ]}>
+              <Text style={styles.statusBadgeText}>
+                {isAvailable() ? 'Available' : 'Sold Out'}
+              </Text>
             </View>
           </View>
 
-          {/* Availability Info */}
-          <View style={styles.availabilitySection}>
-            <Text style={styles.sectionTitle}>Ticket Availability</Text>
-            <View style={styles.availabilityCard}>
-              <View style={styles.availabilityHeader}>
-                <Text style={styles.availableCount}>
-                  {concert.available_tickets} tickets remaining
-                </Text>
-                <Text style={styles.totalCount}>
-                  of {concert.total_tickets} total
-                </Text>
-              </View>
-
-              {/* Progress Bar */}
-              <View style={styles.progressBarContainer}>
-                <View style={styles.progressBarBackground}>
-                  <View
-                    style={[
-                      styles.progressBarFill,
-                      {width: `${getAvailabilityPercentage()}%`},
-                    ]}
-                  />
-                </View>
-                <Text style={styles.progressText}>
-                  {getAvailabilityPercentage().toFixed(1)}% available
-                </Text>
-              </View>
-
-              {concert.queueCount > 0 && (
-                <View style={styles.queueInfo}>
-                  <Text style={styles.queueText}>
-                    👥 {concert.queueCount} people in waiting queue
-                  </Text>
-                </View>
-              )}
+          <View style={styles.contentContainer}>
+            <View style={styles.titleSection}>
+              <Text style={styles.title}>{concert.title}</Text>
+              <Text style={styles.artist}>by {concert.artist}</Text>
             </View>
-          </View>
 
-          {/* Description */}
-          <View style={styles.descriptionSection}>
-            <Text style={styles.sectionTitle}>About This Event</Text>
-            <View style={styles.descriptionCard}>
-              <Text style={styles.description}>{concert.description}</Text>
-            </View>
-          </View>
-
-          {/* Action Buttons */}
-          <View style={styles.actionSection}>
-            {isAvailable() ? (
-              <TouchableOpacity
-                style={styles.purchaseButton}
-                onPress={handlePurchaseTicket}>
-                <Text style={styles.purchaseButtonText}>
-                  Purchase Ticket - {formatPrice(concert.price)}
-                </Text>
-              </TouchableOpacity>
-            ) : (
-              <View style={styles.soldOutContainer}>
-                <View style={styles.soldOutBanner}>
-                  <Text style={styles.soldOutText}>🎫 SOLD OUT</Text>
-                  <Text style={styles.soldOutSubtext}>
-                    All tickets have been sold
-                  </Text>
-                </View>
-
-                {!userInQueue ? (
-                  <TouchableOpacity
-                    style={styles.queueButton}
-                    onPress={handleJoinQueue}
-                    disabled={isJoiningQueue}>
-                    <Text style={styles.queueButtonText}>
-                      {isJoiningQueue
-                        ? '⏳ Joining Queue...'
-                        : '🎯 Join Waiting Queue'}
+            <View style={styles.infoSection}>
+              <View style={styles.infoCard}>
+                <View style={styles.infoRow}>
+                  <View style={styles.iconContainer}>
+                    <Text style={styles.icon}>📅</Text>
+                  </View>
+                  <View style={styles.infoContent}>
+                    <Text style={styles.infoLabel}>Date</Text>
+                    <Text style={styles.infoValue}>
+                      {formatDate(concert.date)}
                     </Text>
-                  </TouchableOpacity>
-                ) : (
-                  <View style={styles.inQueueContainer}>
-                    <View style={styles.inQueueBanner}>
-                      <Text style={styles.inQueueText}>
-                        ✅ You're in the queue!
-                      </Text>
-                      <Text style={styles.inQueueSubtext}>
-                        We'll notify you if tickets become available
-                      </Text>
-                    </View>
-                    <TouchableOpacity
-                      style={styles.leaveQueueButton}
-                      onPress={handleLeaveQueue}>
-                      <Text style={styles.leaveQueueButtonText}>
-                        Leave Queue
-                      </Text>
-                    </TouchableOpacity>
+                  </View>
+                </View>
+
+                <View style={styles.infoRow}>
+                  <View style={styles.iconContainer}>
+                    <Text style={styles.icon}>🕒</Text>
+                  </View>
+                  <View style={styles.infoContent}>
+                    <Text style={styles.infoLabel}>Time</Text>
+                    <Text style={styles.infoValue}>
+                      {formatTime(concert.date)} WIB
+                    </Text>
+                  </View>
+                </View>
+
+                <View style={styles.infoRow}>
+                  <View style={styles.iconContainer}>
+                    <Text style={styles.icon}>📍</Text>
+                  </View>
+                  <View style={styles.infoContent}>
+                    <Text style={styles.infoLabel}>Venue</Text>
+                    <Text style={styles.infoValue}>{concert.venue}</Text>
+                  </View>
+                </View>
+
+                <View style={styles.infoRow}>
+                  <View style={styles.iconContainer}>
+                    <Text style={styles.icon}>💰</Text>
+                  </View>
+                  <View style={styles.infoContent}>
+                    <Text style={styles.infoLabel}>Price</Text>
+                    <Text style={styles.price}>
+                      {formatPrice(concert.price)}
+                    </Text>
+                  </View>
+                </View>
+              </View>
+            </View>
+
+            <View style={styles.availabilitySection}>
+              <Text style={styles.sectionTitle}>Ticket Availability</Text>
+              <View style={styles.availabilityCard}>
+                <View style={styles.availabilityHeader}>
+                  <Text style={styles.availableCount}>
+                    {concert.available_tickets} tickets remaining
+                  </Text>
+                  <Text style={styles.totalCount}>
+                    of {concert.total_tickets} total
+                  </Text>
+                </View>
+
+                <View style={styles.progressBarContainer}>
+                  <View style={styles.progressBarBackground}>
+                    <View
+                      style={[
+                        styles.progressBarFill,
+                        {width: `${getAvailabilityPercentage()}%`},
+                      ]}
+                    />
+                  </View>
+                  <Text style={styles.progressText}>
+                    {getAvailabilityPercentage().toFixed(1)}% available
+                  </Text>
+                </View>
+
+                {concert.queueCount > 0 && (
+                  <View style={styles.queueInfo}>
+                    <Text style={styles.queueText}>
+                      👥 {concert.queueCount} people in waiting queue
+                    </Text>
                   </View>
                 )}
               </View>
-            )}
-          </View>
+            </View>
 
-          {/* Bottom Spacing */}
-          <View style={styles.bottomSpacing} />
-        </View>
-      </ScrollView>
+            <View style={styles.descriptionSection}>
+              <Text style={styles.sectionTitle}>About This Event</Text>
+              <View style={styles.descriptionCard}>
+                <Text style={styles.description}>{concert.description}</Text>
+              </View>
+            </View>
+
+            <View style={styles.actionSection}>
+              {isAvailable() ? (
+                <TouchableOpacity
+                  style={styles.purchaseButton}
+                  onPress={handlePurchaseTicket}>
+                  <Text style={styles.purchaseButtonText}>
+                    Purchase Ticket - {formatPrice(concert.price)}
+                  </Text>
+                </TouchableOpacity>
+              ) : (
+                <View style={styles.soldOutContainer}>
+                  <View style={styles.soldOutBanner}>
+                    <Text style={styles.soldOutText}>🎫 SOLD OUT</Text>
+                    <Text style={styles.soldOutSubtext}>
+                      All tickets have been sold
+                    </Text>
+                  </View>
+
+                  {!userInQueue ? (
+                    <TouchableOpacity
+                      style={styles.queueButton}
+                      onPress={handleJoinQueue}
+                      disabled={isJoiningQueue}>
+                      <Text style={styles.queueButtonText}>
+                        {isJoiningQueue
+                          ? '⏳ Joining Queue...'
+                          : '🎯 Join Waiting Queue'}
+                      </Text>
+                    </TouchableOpacity>
+                  ) : (
+                    <View style={styles.inQueueContainer}>
+                      <View style={styles.inQueueBanner}>
+                        <Text style={styles.inQueueText}>
+                          ✅ You're in the queue!
+                        </Text>
+                        <Text style={styles.inQueueSubtext}>
+                          We'll notify you if tickets become available
+                        </Text>
+                      </View>
+                      <TouchableOpacity
+                        style={styles.leaveQueueButton}
+                        onPress={handleLeaveQueue}>
+                        <Text style={styles.leaveQueueButtonText}>
+                          Leave Queue
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
+                  )}
+                </View>
+              )}
+            </View>
+
+            <View style={styles.bottomSpacing} />
+          </View>
+        </ScrollView>
+      )}
     </SafeAreaView>
   );
 };
@@ -326,6 +324,11 @@ const styles = StyleSheet.create({
     color: COLORS.text,
     fontSize: responsiveFontSize(20),
     fontWeight: 'bold',
+  },
+  backArrow: {
+    width: 20,
+    height: 20,
+    tintColor: COLORS.text,
   },
   statusBadge: {
     position: 'absolute',
