@@ -62,10 +62,6 @@ const LoginScreen: React.FC<Props> = ({navigation}) => {
     }
   };
 
-  const handleSocialLogin = (provider: string): void => {
-    Alert.alert('Coming Soon', `${provider} login will be available soon!`);
-  };
-
   return (
     <SafeAreaView style={globalStyles.container}>
       <ImageBackground
@@ -122,26 +118,6 @@ const LoginScreen: React.FC<Props> = ({navigation}) => {
                   {isLoading ? 'Signing In...' : 'Sign In'}
                 </Text>
               </TouchableOpacity>
-
-              <View style={styles.divider}>
-                <View style={styles.dividerLine} />
-                <Text style={styles.dividerText}>or continue with</Text>
-                <View style={styles.dividerLine} />
-              </View>
-
-              <View style={styles.socialButtons}>
-                <TouchableOpacity
-                  style={styles.socialButton}
-                  onPress={() => handleSocialLogin('Spotify')}>
-                  <Text style={styles.socialButtonText}>🎵 Spotify</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={styles.socialButton}
-                  onPress={() => handleSocialLogin('Apple Music')}>
-                  <Text style={styles.socialButtonText}>🍎 Apple Music</Text>
-                </TouchableOpacity>
-              </View>
 
               <TouchableOpacity
                 style={styles.registerLink}

@@ -25,7 +25,7 @@ export const fetchConcertById = createAsyncThunk(
 
       return response.data;
     } catch (error: any) {
-      console.warn('API failed for single concert, using mock data:', error);
+      console.log('API failed:', error);
       if (!concert) {
         return rejectWithValue('Concert not found');
       }
