@@ -15,7 +15,6 @@ import {StackNavigationProp} from '@react-navigation/stack';
 import {RootStackParamList} from '../../types';
 import {COLORS} from '../../constants';
 import {responsiveFontSize, spacing} from '../../utils';
-import {useAuth} from '../../context/AuthContext';
 import {APP_CONFIG} from '../../constants';
 import {fetchPaymentMethods} from '../../store/slices/paymentMethodSlice';
 import {useAppDispatch, useAppSelector} from '../../store/hooks';
@@ -42,16 +41,13 @@ const formatPrice = (price: number) =>
 
 const PaymentScreen: React.FC<Props> = ({navigation}) => {
   const route = useRoute<PaymentScreenRouteProp>();
-  const {concert, quantity, totalPrice, orderId} = route.params;
-  const {state} = useAuth();
+  const {concert, quantity, totalPrice, idUser} = route.params;
   const dispatch = useAppDispatch();
   const {paymentMethods} = useAppSelector(state => state.paymentMethod);
 
   // Countdown timer state (3 days = 72 hours = 259200 seconds)
   const [selectedPayment, setSelectedPayment] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
-
-  const user = state.user;
 
   useEffect(() => {
     dispatch(fetchPaymentMethods());
@@ -65,61 +61,13 @@ const PaymentScreen: React.FC<Props> = ({navigation}) => {
 
     setIsProcessing(true);
 
-    try {
-      // Here you would integrate with actual payment gateway
-      // For demo purposes, we'll simulate payment processing
-
-      const paymentData = {
-        orderId,
-        paymentMethod: selectedPayment,
-        amount: totalPrice + 5000, // Include admin fee
-        userId: user?.id,
-      };
-
-      console.log('Processing payment:', paymentData);
-
-      // Simulate API call delay
-      setTimeout(() => {
-        setIsProcessing(false);
-
-        // Navigate to payment success or show payment instructions
-        Alert.alert(
-          'Payment Initiated',
-          'Please complete your payment using the selected method. You will receive further instructions.',
-          [
-            {
-              text: 'OK',
-              onPress: () => {
-                // Navigate to payment instructions or success screen
-                navigation.navigate('PaymentInstructions', {
-                  orderId,
-                  paymentMethod: selectedPayment,
-                  amount: totalPrice + 5000,
-                });
-              },
-            },
-          ],
-        );
-      }, 2000);
-    } catch (error) {
-      setIsProcessing(false);
-      Alert.alert('Error', 'Failed to process payment. Please try again.');
-    }
-  };
-
-  const handleCancelPayment = () => {
-    Alert.alert(
-      'Cancel Payment',
-      'Are you sure you want to cancel this payment? Your ticket reservation will be lost.',
-      [
-        {text: 'No', style: 'cancel'},
-        {
-          text: 'Yes',
-          style: 'destructive',
-          onPress: () => navigation.goBack(),
-        },
-      ],
-    );
+    const paymentData = {
+      paymentMethod: selectedPayment,
+      concertId: concert.id_concert,
+      totalPrice,
+      idUser,
+      quantity,
+    };
   };
 
   return (

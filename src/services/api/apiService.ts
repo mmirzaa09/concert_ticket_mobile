@@ -17,7 +17,6 @@ const createApiService = () => {
   const getAuthToken = async (): Promise<string | null> => {
     try {
       const token = await AsyncStorage.getItem(STORAGE_KEYS.USER_TOKEN);
-      console.log('Retrieved token:', token);
       return token;
     } catch (error) {
       console.error('Error getting auth token:', error);

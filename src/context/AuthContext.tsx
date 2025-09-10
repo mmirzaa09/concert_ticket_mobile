@@ -177,8 +177,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({children}) => {
       // Call real API
       const response = await apiService.login({email, password});
 
-      // Debug: Log the actual response structure
-
       if (response.success && response.data) {
         // Handle different possible response structures
         let user;
@@ -194,14 +192,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({children}) => {
           token = response.data.token;
           // Create user object from response data
           user = {
-            id: response.data.id || response.data.user_id || '1',
+            id: response.data.id_user,
             email: response.data.email || email,
-            name: response.data.name || response.data.username || 'User',
+            name: response.data.name,
             avatar: response.data.avatar || response.data.profile_picture,
-            createdAt:
-              response.data.created_at ||
-              response.data.createdAt ||
-              new Date().toISOString(),
           };
         }
         // Fallback if structure is different

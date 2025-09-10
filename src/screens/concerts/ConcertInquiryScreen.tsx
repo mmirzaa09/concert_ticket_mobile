@@ -68,6 +68,8 @@ const ConcertInquiryScreen: React.FC<Props> = ({navigation}) => {
   const user = state.user;
 
   useEffect(() => {
+    console.log('Concert ID from route params:', route.params);
+    console.log('Concert ID:', user);
     if (concertId) {
       dispatch(fetchConcertById(concertId));
     }
@@ -100,25 +102,14 @@ const ConcertInquiryScreen: React.FC<Props> = ({navigation}) => {
   const totalPrice = concert.price * ticketCount;
 
   const handleProceed = () => {
-    // Generate a unique order ID
-    const orderId = `ORDER-${Date.now()}-${Math.random().toString(36).substring(2, 15)}`;
-    
-    const payloadData = {
-      idUser: user?.id,
-      nameUser: user?.name,
-      idConcert: concert.id,
-      quantity: ticketCount,
-      totalPrice: totalPrice,
-    };
-
-    console.log('Proceeding to payment with data:', payloadData);
-    
     // Navigate to Payment screen with order data
     navigation.navigate('Payment', {
       concert: concert,
       quantity: ticketCount,
       totalPrice: totalPrice,
-      orderId: orderId,
+      idUser: user?.id,
+      nameUser: user?.name,
+      idConcert: concert.id,
     });
   };
 

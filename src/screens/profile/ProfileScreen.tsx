@@ -33,6 +33,7 @@ const ProfileScreen: React.FC<Props> = ({navigation: _navigation}) => {
 
   // Get user from auth context
   const user = state.user;
+  console.log('User data in ProfileScreen:', user);
 
   // Default avatar if user doesn't have one
   const defaultAvatar =

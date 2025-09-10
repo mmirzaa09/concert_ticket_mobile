@@ -24,7 +24,6 @@ export const fetchPaymentMethods = createAsyncThunk(
   async (_, {rejectWithValue}) => {
     try {
       const response = await apiService.getPaymentMethods();
-      console.log('check response payment method:', response);
       return response.data;
     } catch (error: any) {
       console.error('Error fetching payment methods:', error);

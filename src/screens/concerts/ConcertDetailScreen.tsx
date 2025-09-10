@@ -90,7 +90,7 @@ const ConcertDetailScreen: React.FC<Props> = ({navigation}) => {
   };
 
   const handlePurchaseTicket = () => {
-    navigation.navigate('ConcertInquiry', {concertId: concert.id});
+    navigation.navigate('ConcertInquiry', {concertId: concert.id_concert});
     // Navigate to purchase screen or show purchase modal
   };
 
