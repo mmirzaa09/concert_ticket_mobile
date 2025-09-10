@@ -7,6 +7,18 @@ export type RootStackParamList = {
   ConcertDetail: {concertId: string};
   TicketPurchase: {concertId: string};
   Queue: {concertId: string};
+  ConcertInquiry: {concertId: string};
+  Payment: {
+    concert: Concert;
+    quantity: number;
+    totalPrice: number;
+    orderId: string;
+  };
+  PaymentInstructions: {
+    orderId: string;
+    paymentMethod: string;
+    amount: number;
+  };
 };
 
 export type TabParamList = {
@@ -90,6 +102,15 @@ export interface RegisterCredentials {
   email: string;
   password: string;
   confirmPassword: string;
+}
+
+// Payment Types
+export interface PaymentMethod {
+  name: string;
+  icon: string;
+  type: 'bank' | 'ewallet' | 'qris';
+  number: string;
+  account_name: string;
 }
 
 // Theme Types

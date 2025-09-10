@@ -4,8 +4,8 @@ export const APP_CONFIG = {
   // API_BASE_URL: __DEV__
   //   ? 'http://192.168.1.9:8000'
   //   : 'https://api.queueless.com',
-  API_BASE_URL: 'http://192.168.4.179:3030/api',
-  API_IMAGE: 'http://192.168.4.179:3030/uploads/',
+  API_BASE_URL: 'http://192.168.1.135:3030/api',
+  API_IMAGE: 'http://192.168.1.135:3030/uploads/',
   API_TIMEOUT: 10000,
 };
 
@@ -25,6 +25,11 @@ export const COLORS = {
   background: '#000000',
   surface: '#1a1a1a',
   card: '#2a2a2a',
+  white: '#ffffff',
+
+  // Border and Divider Colors
+  border: '#333333',
+  divider: '#444444',
 
   // Text Colors
   text: '#ffffff',
@@ -36,6 +41,7 @@ export const COLORS = {
   error: '#ff4444',
   warning: '#ffaa00',
   info: '#00aaff',
+  disabled: '#666666',
 
   // Transparent Colors
   overlay: 'rgba(0, 0, 0, 0.7)',
@@ -70,15 +76,8 @@ export const API_ENDPOINTS = {
   CONCERT_DETAIL: '/concert/:id',
   SEARCH_CONCERTS: '/concert/search',
 
-  // Tickets
-  TICKETS: '/tickets',
-  PURCHASE_TICKET: '/tickets/purchase',
-  MY_TICKETS: '/tickets/user/:userId',
-
-  // Queue
-  JOIN_QUEUE: '/queue/join',
-  QUEUE_STATUS: '/queue/status/:concertId',
-  LEAVE_QUEUE: '/queue/leave',
+  // Payment method
+  PAYMENT_METHODS: '/payment-method',
 } as const;
 
 // Storage Keys

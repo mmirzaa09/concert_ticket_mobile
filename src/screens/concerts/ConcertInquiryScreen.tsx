@@ -7,6 +7,7 @@ import {
   Image,
   SafeAreaView,
   ScrollView,
+  ActivityIndicator,
 } from 'react-native';
 import {RouteProp, useRoute} from '@react-navigation/native';
 import {StackNavigationProp} from '@react-navigation/stack';
@@ -15,17 +16,19 @@ import {COLORS} from '../../constants';
 import {responsiveFontSize, spacing} from '../../utils';
 import {useAuth} from '../../context/AuthContext';
 import {APP_CONFIG} from '../../constants';
+import {useAppDispatch, useAppSelector} from '../../store/hooks';
+import {fetchConcertById} from '../../store/slices/concertsSlice';
 
 // Navigation types
-export type ConcertPurchaseInquiryDetailScreenRouteProp = RouteProp<
+export type ConcertInquiryScreenRouteProp = RouteProp<
   RootStackParamList,
-  'TicketPurchase'
+  'ConcertInquiry'
 >;
-export type ConcertPurchaseInquiryDetailScreenNavigationProp =
-  StackNavigationProp<RootStackParamList, 'TicketPurchase'>;
+export type ConcertInquiryScreenNavigationProp =
+  StackNavigationProp<RootStackParamList, 'ConcertInquiry'>;
 
 interface Props {
-  navigation: ConcertPurchaseInquiryDetailScreenNavigationProp;
+  navigation: ConcertInquiryScreenNavigationProp;
 }
 
 const formatPrice = (price: number) =>
@@ -55,13 +58,33 @@ const formatTime = (dateString: string) => {
 };
 
 const ConcertInquiryScreen: React.FC<Props> = ({navigation}) => {
-  // In real app, get concert and ticketCount from params or redux
-  const route = useRoute<ConcertPurchaseInquiryDetailScreenRouteProp>();
-  const concert = route.params.concert;
+  const route = useRoute<ConcertInquiryScreenRouteProp>();
+  const {concertId} = route.params;
+  const dispatch = useAppDispatch();
+  const {selectedConcert, loading} = useAppSelector(state => state.concerts);
   const [ticketCount, setTicketCount] = useState(1);
   const {state} = useAuth();
 
   const user = state.user;
+
+  useEffect(() => {
+    if (concertId) {
+      dispatch(fetchConcertById(concertId));
+    }
+  }, [concertId, dispatch]);
+
+  if (loading || !selectedConcert) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={COLORS.primary} />
+          <Text style={styles.loadingText}>Loading concert details...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  const concert = selectedConcert;
 
   const handleDecrease = () => {
     if (ticketCount > 1) {
@@ -77,6 +100,9 @@ const ConcertInquiryScreen: React.FC<Props> = ({navigation}) => {
   const totalPrice = concert.price * ticketCount;
 
   const handleProceed = () => {
+    // Generate a unique order ID
+    const orderId = `ORDER-${Date.now()}-${Math.random().toString(36).substring(2, 15)}`;
+    
     const payloadData = {
       idUser: user?.id,
       nameUser: user?.name,
@@ -86,10 +112,14 @@ const ConcertInquiryScreen: React.FC<Props> = ({navigation}) => {
     };
 
     console.log('Proceeding to payment with data:', payloadData);
-    // navigation.navigate('TicketPurchase', {
-    //   concertId: concert.id,
-    //   quantity: ticketCount,
-    // });
+    
+    // Navigate to Payment screen with order data
+    navigation.navigate('Payment', {
+      concert: concert,
+      quantity: ticketCount,
+      totalPrice: totalPrice,
+      orderId: orderId,
+    });
   };
 
   return (
@@ -273,6 +303,17 @@ const styles = StyleSheet.create({
     color: COLORS.background,
     fontSize: responsiveFontSize(18),
     fontWeight: 'bold',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: COLORS.background,
+  },
+  loadingText: {
+    color: COLORS.text,
+    fontSize: responsiveFontSize(16),
+    marginTop: spacing.md,
   },
 });
 

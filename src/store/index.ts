@@ -7,6 +7,7 @@ import {combineReducers} from '@reduxjs/toolkit';
 import authReducer from './slices/authSlice';
 import concertsReducer from './slices/concertsSlice';
 import ticketsReducer from './slices/ticketsSlice';
+import paymentMethodReducer from './slices/paymentMethodSlice';
 
 // Persist configuration
 const persistConfig = {
@@ -20,6 +21,7 @@ const rootReducer = combineReducers({
   auth: authReducer,
   concerts: concertsReducer,
   tickets: ticketsReducer,
+  paymentMethod: paymentMethodReducer,
 });
 
 // Persisted reducer

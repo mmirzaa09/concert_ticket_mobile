@@ -182,68 +182,15 @@ const createApiService = () => {
         true, // Public endpoint, no auth required
       ),
 
-    // Protected endpoints
-    purchaseTicket: (data: {
-      concertId: string;
-      quantity: number;
-    }): Promise<ApiResponse<any>> =>
-      request<any>(
-        API_ENDPOINTS.PURCHASE_TICKET,
-        {
-          method: 'POST',
-          body: JSON.stringify(data),
-        },
-        true,
-      ),
-
-    getMyTickets: (userId: string): Promise<ApiResponse<any[]>> =>
+    // Payment methods with auth
+    getPaymentMethods: (): Promise<ApiResponse<any[]>> =>
       request<any[]>(
-        API_ENDPOINTS.MY_TICKETS.replace(':userId', userId),
-        {method: 'GET'},
-        true,
-      ),
-
-    joinQueue: (concertId: string): Promise<ApiResponse<any>> =>
-      request<any>(
-        API_ENDPOINTS.JOIN_QUEUE,
+        API_ENDPOINTS.PAYMENT_METHODS,
         {
-          method: 'POST',
-          body: JSON.stringify({concertId}),
+          method: 'GET',
         },
         true,
-      ),
-
-    getQueueStatus: (concertId: string): Promise<ApiResponse<any>> =>
-      request<any>(
-        API_ENDPOINTS.QUEUE_STATUS.replace(':concertId', concertId),
-        {method: 'GET'},
-        true,
-      ),
-
-    leaveQueue: (concertId: string): Promise<ApiResponse<any>> =>
-      request<any>(
-        API_ENDPOINTS.LEAVE_QUEUE,
-        {
-          method: 'POST',
-          body: JSON.stringify({concertId}),
-        },
-        true,
-      ),
-
-    // Utility methods
-    isAuthenticated: async (): Promise<boolean> => {
-      const token = await getAuthToken();
-      return token !== null;
-    },
-
-    getToken: getAuthToken,
-
-    // For testing session expiration (remove in production)
-    simulateSessionExpiration: () => {
-      if (sessionExpiredCallback) {
-        sessionExpiredCallback();
-      }
-    },
+      ), // requireAuth = true
   };
 };
 
