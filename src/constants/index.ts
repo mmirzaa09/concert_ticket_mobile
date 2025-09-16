@@ -76,8 +76,12 @@ export const API_ENDPOINTS = {
   CONCERT_DETAIL: '/concert/:id',
   SEARCH_CONCERTS: '/concert/search',
 
+  // Orders
+  ORDER_INQUIRY: '/order/inquiry',
+
   // Payment method
   PAYMENT_METHODS: '/payment-method',
+  PAYMENT_METHOD_BY_ID: '/payment-method/:id',
 } as const;
 
 // Storage Keys

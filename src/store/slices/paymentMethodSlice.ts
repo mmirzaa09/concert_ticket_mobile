@@ -6,7 +6,9 @@ import {apiService} from '../../services/api/apiService';
 export interface PaymentMethodState {
   paymentMethods: PaymentMethod[];
   selectedPaymentMethod: PaymentMethod | null;
+  currentPaymentMethod: PaymentMethod | null; // For individual fetched payment method
   loading: boolean;
+  loadingById: boolean; // Separate loading state for individual fetch
   error: string | null;
 }
 
@@ -14,7 +16,9 @@ export interface PaymentMethodState {
 const initialState: PaymentMethodState = {
   paymentMethods: [],
   selectedPaymentMethod: null,
+  currentPaymentMethod: null,
   loading: false,
+  loadingById: false,
   error: null,
 };
 
@@ -24,12 +28,45 @@ export const fetchPaymentMethods = createAsyncThunk(
   async (_, {rejectWithValue}) => {
     try {
       const response = await apiService.getPaymentMethods();
-      return response.data;
+
+      if (response.success && response.data) {
+        return response.data;
+      } else {
+        return rejectWithValue(
+          response.message || 'Failed to fetch payment methods',
+        );
+      }
     } catch (error: any) {
       console.error('Error fetching payment methods:', error);
-      // Return default payment methods as fallback
       return rejectWithValue(
-        error.message || 'Failed to fetch payment methods',
+        error.response?.data?.message ||
+          error.message ||
+          'Failed to fetch payment methods',
+      );
+    }
+  },
+);
+
+// Async thunk for fetching payment method by ID
+export const fetchPaymentMethodsById = createAsyncThunk(
+  'paymentMethod/fetchPaymentMethodsById',
+  async (id: number, {rejectWithValue}) => {
+    try {
+      const response = await apiService.getPaymentMethodById(id);
+
+      if (response.success && response.data) {
+        return response.data;
+      } else {
+        return rejectWithValue(
+          response.message || 'Failed to fetch payment method',
+        );
+      }
+    } catch (error: any) {
+      console.error('Error fetching payment method by ID:', error);
+      return rejectWithValue(
+        error.response?.data?.message ||
+          error.message ||
+          'Failed to fetch payment method',
       );
     }
   },
@@ -46,13 +83,18 @@ const paymentMethodSlice = createSlice({
     clearSelectedPaymentMethod: state => {
       state.selectedPaymentMethod = null;
     },
+    clearCurrentPaymentMethod: state => {
+      state.currentPaymentMethod = null;
+    },
     clearError: state => {
       state.error = null;
     },
     resetPaymentMethodState: state => {
       state.paymentMethods = [];
       state.selectedPaymentMethod = null;
+      state.currentPaymentMethod = null;
       state.loading = false;
+      state.loadingById = false;
       state.error = null;
     },
   },
@@ -70,9 +112,23 @@ const paymentMethodSlice = createSlice({
       })
       .addCase(fetchPaymentMethods.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.error.message || 'Failed to fetch payment methods';
-        // Still set default payment methods on error
-        state.paymentMethods = getDefaultPaymentMethods();
+        state.error = action.payload as string;
+        // Don't set static data, let the app handle the error gracefully
+      })
+      // Fetch payment method by ID
+      .addCase(fetchPaymentMethodsById.pending, state => {
+        state.loadingById = true;
+        state.error = null;
+      })
+      .addCase(fetchPaymentMethodsById.fulfilled, (state, action) => {
+        state.loadingById = false;
+        state.currentPaymentMethod = action.payload;
+        state.error = null;
+      })
+      .addCase(fetchPaymentMethodsById.rejected, (state, action) => {
+        state.loadingById = false;
+        state.error = action.payload as string;
+        state.currentPaymentMethod = null;
       });
   },
 });
@@ -81,6 +137,7 @@ const paymentMethodSlice = createSlice({
 export const {
   setSelectedPaymentMethod,
   clearSelectedPaymentMethod,
+  clearCurrentPaymentMethod,
   clearError,
   resetPaymentMethodState,
 } = paymentMethodSlice.actions;
@@ -102,10 +159,28 @@ export const selectPaymentMethodError = (state: {
   paymentMethod: PaymentMethodState;
 }) => state.paymentMethod.error;
 
+export const selectCurrentPaymentMethod = (state: {
+  paymentMethod: PaymentMethodState;
+}) => state.paymentMethod.currentPaymentMethod;
+
+export const selectPaymentMethodLoadingById = (state: {
+  paymentMethod: PaymentMethodState;
+}) => state.paymentMethod.loadingById;
+
 export const selectPaymentMethodsByType =
   (type: PaymentMethod['type']) =>
   (state: {paymentMethod: PaymentMethodState}) =>
     state.paymentMethod.paymentMethods.filter(method => method.type === type);
+
+// Helper selector to get payment method by icon
+export const selectPaymentMethodByIcon =
+  (icon: string) => (state: {paymentMethod: PaymentMethodState}) =>
+    state.paymentMethod.paymentMethods.find(method => method.icon === icon);
+
+// Helper selector to get payment method by ID from current list
+export const selectPaymentMethodById =
+  (id: number) => (state: {paymentMethod: PaymentMethodState}) =>
+    state.paymentMethod.paymentMethods.find(method => method.id_method === id);
 
 // Export reducer
 export default paymentMethodSlice.reducer;

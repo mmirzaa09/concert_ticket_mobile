@@ -7,7 +7,6 @@ import {
   Image,
   SafeAreaView,
   ScrollView,
-  Alert,
   FlatList,
 } from 'react-native';
 import {RouteProp, useRoute} from '@react-navigation/native';
@@ -17,8 +16,10 @@ import {COLORS} from '../../constants';
 import {responsiveFontSize, spacing} from '../../utils';
 import {APP_CONFIG} from '../../constants';
 import {fetchPaymentMethods} from '../../store/slices/paymentMethodSlice';
+import {createOrderInquiry} from '../../store/slices/orderSlice';
 import {useAppDispatch, useAppSelector} from '../../store/hooks';
 import images from '../../assets';
+import {useGlobalModalContext} from '../../context/GlobalModalContext';
 
 // Navigation types
 export type PaymentScreenRouteProp = RouteProp<RootStackParamList, 'Payment'>;
@@ -48,26 +49,32 @@ const PaymentScreen: React.FC<Props> = ({navigation}) => {
   // Countdown timer state (3 days = 72 hours = 259200 seconds)
   const [selectedPayment, setSelectedPayment] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const {showError} = useGlobalModalContext();
 
   useEffect(() => {
     dispatch(fetchPaymentMethods());
   }, [dispatch]);
 
   const handleProceedPayment = async () => {
-    if (!selectedPayment) {
-      Alert.alert('Error', 'Please select a payment method');
-      return;
-    }
-
     setIsProcessing(true);
 
     const paymentData = {
       paymentMethod: selectedPayment,
-      concertId: concert.id_concert,
-      totalPrice,
-      idUser,
+      id_concert: concert.id_concert,
+      id_user: idUser,
+      total_price: totalPrice,
       quantity,
     };
+
+    try {
+      await dispatch(createOrderInquiry(paymentData));
+      setIsProcessing(false);
+      return navigation.navigate('PaymentInstructions', paymentData);
+    } catch (error) {
+      setIsProcessing(false);
+      console.error('Error creating order inquiry:', error);
+      showError('Failed to create order inquiry. Please try again.');
+    }
   };
 
   return (
@@ -123,10 +130,10 @@ const PaymentScreen: React.FC<Props> = ({navigation}) => {
               <TouchableOpacity
                 style={[
                   styles.paymentMethod,
-                  selectedPayment === method.name &&
+                  selectedPayment === method.id_method &&
                     styles.selectedPaymentMethod,
                 ]}
-                onPress={() => setSelectedPayment(method.name)}>
+                onPress={() => setSelectedPayment(method.id_method)}>
                 <Image
                   style={styles.paymentIcon}
                   source={images[method.icon]}
@@ -134,10 +141,10 @@ const PaymentScreen: React.FC<Props> = ({navigation}) => {
                 <View
                   style={[
                     styles.radioButton,
-                    selectedPayment === method.name &&
+                    selectedPayment === method.id_method &&
                       styles.radioButtonSelected,
                   ]}>
-                  {selectedPayment === method.name && (
+                  {selectedPayment === method.id_method && (
                     <View style={styles.radioButtonInner} />
                   )}
                 </View>
@@ -307,20 +314,6 @@ const styles = StyleSheet.create({
     margin: spacing.md,
     gap: spacing.md,
     bottom: 0,
-  },
-  cancelButton: {
-    flex: 1,
-    backgroundColor: COLORS.white,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    paddingVertical: spacing.md,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  cancelButtonText: {
-    fontSize: responsiveFontSize(16),
-    color: COLORS.textSecondary,
-    fontWeight: '600',
   },
   proceedButton: {
     flex: 2,

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useEffect} from 'react';
 import {
   View,
   Text,
@@ -32,8 +32,7 @@ const HomeScreen: React.FC<Props> = ({navigation}) => {
   const dispatch = useAppDispatch();
   const {concerts, isLoading, error} = useAppSelector(state => state.concerts);
 
-  // Fetch concerts on component mount
-  React.useEffect(() => {
+  useEffect(() => {
     dispatch(fetchConcerts());
   }, [dispatch]);
 
@@ -42,7 +41,7 @@ const HomeScreen: React.FC<Props> = ({navigation}) => {
       <TouchableOpacity
         style={styles.concertCard}
         onPress={() =>
-          navigation.navigate('ConcertDetail', {concertId: item.id})
+          navigation.navigate('ConcertDetail', {concertId: item.id_concert})
         }>
         <Image
           source={{uri: `${APP_CONFIG.API_IMAGE}${item.image_url}`}}
@@ -82,7 +81,7 @@ const HomeScreen: React.FC<Props> = ({navigation}) => {
         <FlatList
           data={concerts}
           renderItem={renderConcertItem}
-          keyExtractor={item => item.id}
+          keyExtractor={item => item.id_concert}
           contentContainerStyle={styles.listContainer}
           showsVerticalScrollIndicator={false}
           refreshing={isLoading}

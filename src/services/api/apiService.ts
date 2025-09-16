@@ -190,6 +190,29 @@ const createApiService = () => {
         },
         true,
       ), // requireAuth = true
+
+    getPaymentMethodById: (id: number): Promise<ApiResponse<any>> =>
+      request<any>(
+        API_ENDPOINTS.PAYMENT_METHOD_BY_ID.replace(':id', id.toString()),
+        {
+          method: 'GET',
+        },
+        true, // requireAuth = true
+      ),
+
+    postInquiryOrder: (orderData: {
+      id_concert: string;
+      quantity: number;
+      total_price: number;
+    }): Promise<ApiResponse<any>> =>
+      request<any>(
+        API_ENDPOINTS.ORDER_INQUIRY,
+        {
+          method: 'POST',
+          body: JSON.stringify(orderData),
+        },
+        true, // requireAuth = true
+      ),
   };
 };
 

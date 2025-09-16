@@ -64,46 +64,34 @@ const ConcertDetailScreen: React.FC<Props> = ({navigation}) => {
   const dispatch = useAppDispatch();
   const {selectedConcert} = useAppSelector(state => state.concerts);
 
-  const [userInQueue, setUserInQueue] = useState(false);
-  const [isJoiningQueue, setIsJoiningQueue] = useState(false);
-
-  const [concert, setConcert] = useState();
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    dispatch(fetchConcertById(concertId));
-    setConcert(selectedConcert);
-    setIsLoading(false);
+    setTimeout(() => {
+      dispatch(fetchConcertById(concertId));
+      setIsLoading(false);
+    }, 1000);
   }, [concertId, dispatch]);
 
-  const handleJoinQueue = async () => {
-    setIsJoiningQueue(true);
-    // Simulate API call
-    setTimeout(() => {
-      setUserInQueue(true);
-      setIsJoiningQueue(false);
-    }, 1000);
-  };
-
-  const handleLeaveQueue = async () => {
-    setUserInQueue(false);
-  };
-
   const handlePurchaseTicket = () => {
-    navigation.navigate('ConcertInquiry', {concertId: concert.id_concert});
-    // Navigate to purchase screen or show purchase modal
+    navigation.navigate('ConcertInquiry', {
+      concertId: selectedConcert.id_selectedConcert,
+    });
   };
 
   const getAvailabilityPercentage = (): number => {
-    if (concert.total_tickets === 0) {
+    if (selectedConcert.total_tickets === 0) {
       return 0;
     }
-    return (concert.available_tickets / concert.total_tickets) * 100;
+    return (
+      (selectedConcert.available_tickets / selectedConcert.total_tickets) * 100
+    );
   };
 
   const isAvailable = (): boolean => {
-    console.log('check concert:', concert);
-    return concert.available_tickets > 0 && concert.status === 1;
+    return (
+      selectedConcert.available_tickets > 0 && selectedConcert.status === 1
+    );
   };
 
   return (
@@ -112,7 +100,9 @@ const ConcertDetailScreen: React.FC<Props> = ({navigation}) => {
         <ScrollView showsVerticalScrollIndicator={false}>
           <View style={styles.imageContainer}>
             <Image
-              source={{uri: `${APP_CONFIG.API_IMAGE}${concert.image_url}`}}
+              source={{
+                uri: `${APP_CONFIG.API_IMAGE}${selectedConcert.image_url}`,
+              }}
               style={styles.concertImage}
               resizeMode="cover"
             />
@@ -139,8 +129,8 @@ const ConcertDetailScreen: React.FC<Props> = ({navigation}) => {
 
           <View style={styles.contentContainer}>
             <View style={styles.titleSection}>
-              <Text style={styles.title}>{concert.title}</Text>
-              <Text style={styles.artist}>by {concert.artist}</Text>
+              <Text style={styles.title}>{selectedConcert.title}</Text>
+              <Text style={styles.artist}>by {selectedConcert.artist}</Text>
             </View>
 
             <View style={styles.infoSection}>
@@ -152,7 +142,7 @@ const ConcertDetailScreen: React.FC<Props> = ({navigation}) => {
                   <View style={styles.infoContent}>
                     <Text style={styles.infoLabel}>Date</Text>
                     <Text style={styles.infoValue}>
-                      {formatDate(concert.date)}
+                      {formatDate(selectedConcert.date)}
                     </Text>
                   </View>
                 </View>
@@ -164,7 +154,7 @@ const ConcertDetailScreen: React.FC<Props> = ({navigation}) => {
                   <View style={styles.infoContent}>
                     <Text style={styles.infoLabel}>Time</Text>
                     <Text style={styles.infoValue}>
-                      {formatTime(concert.date)} WIB
+                      {formatTime(selectedConcert.date)} WIB
                     </Text>
                   </View>
                 </View>
@@ -175,7 +165,9 @@ const ConcertDetailScreen: React.FC<Props> = ({navigation}) => {
                   </View>
                   <View style={styles.infoContent}>
                     <Text style={styles.infoLabel}>Venue</Text>
-                    <Text style={styles.infoValue}>{concert.venue}</Text>
+                    <Text style={styles.infoValue}>
+                      {selectedConcert.venue}
+                    </Text>
                   </View>
                 </View>
 
@@ -186,7 +178,7 @@ const ConcertDetailScreen: React.FC<Props> = ({navigation}) => {
                   <View style={styles.infoContent}>
                     <Text style={styles.infoLabel}>Price</Text>
                     <Text style={styles.price}>
-                      {formatPrice(concert.price)}
+                      {formatPrice(selectedConcert.price)}
                     </Text>
                   </View>
                 </View>
@@ -198,10 +190,10 @@ const ConcertDetailScreen: React.FC<Props> = ({navigation}) => {
               <View style={styles.availabilityCard}>
                 <View style={styles.availabilityHeader}>
                   <Text style={styles.availableCount}>
-                    {concert.available_tickets} tickets remaining
+                    {selectedConcert.available_tickets} tickets remaining
                   </Text>
                   <Text style={styles.totalCount}>
-                    of {concert.total_tickets} total
+                    of {selectedConcert.total_tickets} total
                   </Text>
                 </View>
 
@@ -219,10 +211,10 @@ const ConcertDetailScreen: React.FC<Props> = ({navigation}) => {
                   </Text>
                 </View>
 
-                {concert.queueCount > 0 && (
+                {selectedConcert.queueCount > 0 && (
                   <View style={styles.queueInfo}>
                     <Text style={styles.queueText}>
-                      👥 {concert.queueCount} people in waiting queue
+                      👥 {selectedConcert.queueCount} people in waiting queue
                     </Text>
                   </View>
                 )}
@@ -232,7 +224,9 @@ const ConcertDetailScreen: React.FC<Props> = ({navigation}) => {
             <View style={styles.descriptionSection}>
               <Text style={styles.sectionTitle}>About This Event</Text>
               <View style={styles.descriptionCard}>
-                <Text style={styles.description}>{concert.description}</Text>
+                <Text style={styles.description}>
+                  {selectedConcert.description}
+                </Text>
               </View>
             </View>
 
@@ -242,7 +236,7 @@ const ConcertDetailScreen: React.FC<Props> = ({navigation}) => {
                   style={styles.purchaseButton}
                   onPress={handlePurchaseTicket}>
                   <Text style={styles.purchaseButtonText}>
-                    Purchase Ticket - {formatPrice(concert.price)}
+                    Purchase Ticket - {formatPrice(selectedConcert.price)}
                   </Text>
                 </TouchableOpacity>
               ) : (
@@ -253,37 +247,6 @@ const ConcertDetailScreen: React.FC<Props> = ({navigation}) => {
                       All tickets have been sold
                     </Text>
                   </View>
-
-                  {!userInQueue ? (
-                    <TouchableOpacity
-                      style={styles.queueButton}
-                      onPress={handleJoinQueue}
-                      disabled={isJoiningQueue}>
-                      <Text style={styles.queueButtonText}>
-                        {isJoiningQueue
-                          ? '⏳ Joining Queue...'
-                          : '🎯 Join Waiting Queue'}
-                      </Text>
-                    </TouchableOpacity>
-                  ) : (
-                    <View style={styles.inQueueContainer}>
-                      <View style={styles.inQueueBanner}>
-                        <Text style={styles.inQueueText}>
-                          ✅ You're in the queue!
-                        </Text>
-                        <Text style={styles.inQueueSubtext}>
-                          We'll notify you if tickets become available
-                        </Text>
-                      </View>
-                      <TouchableOpacity
-                        style={styles.leaveQueueButton}
-                        onPress={handleLeaveQueue}>
-                        <Text style={styles.leaveQueueButtonText}>
-                          Leave Queue
-                        </Text>
-                      </TouchableOpacity>
-                    </View>
-                  )}
                 </View>
               )}
             </View>
@@ -532,58 +495,6 @@ const styles = StyleSheet.create({
     fontSize: responsiveFontSize(14),
     color: COLORS.textMuted,
     marginTop: 4,
-  },
-  queueButton: {
-    backgroundColor: COLORS.warning,
-    borderRadius: 16,
-    paddingVertical: spacing.md,
-    paddingHorizontal: spacing.xl,
-    alignItems: 'center',
-    width: '100%',
-  },
-  queueButtonText: {
-    color: COLORS.background,
-    fontSize: responsiveFontSize(16),
-    fontWeight: 'bold',
-  },
-  inQueueContainer: {
-    width: '100%',
-    alignItems: 'center',
-  },
-  inQueueBanner: {
-    backgroundColor: COLORS.success + '20',
-    borderRadius: 12,
-    padding: spacing.md,
-    alignItems: 'center',
-    marginBottom: spacing.md,
-    width: '100%',
-    borderWidth: 1,
-    borderColor: COLORS.success + '40',
-  },
-  inQueueText: {
-    fontSize: responsiveFontSize(18),
-    fontWeight: 'bold',
-    color: COLORS.success,
-  },
-  inQueueSubtext: {
-    fontSize: responsiveFontSize(14),
-    color: COLORS.textMuted,
-    marginTop: 4,
-    textAlign: 'center',
-  },
-  leaveQueueButton: {
-    backgroundColor: COLORS.card,
-    borderRadius: 12,
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.lg,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: COLORS.error,
-  },
-  leaveQueueButtonText: {
-    color: COLORS.error,
-    fontSize: responsiveFontSize(14),
-    fontWeight: '600',
   },
   bottomSpacing: {
     height: spacing.xl,

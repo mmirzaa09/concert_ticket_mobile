@@ -7,18 +7,6 @@ export type RootStackParamList = {
   ConcertDetail: {concertId: string};
   TicketPurchase: {concertId: string};
   Queue: {concertId: string};
-  ConcertInquiry: {concertId: string};
-  Payment: {
-    concert: Concert;
-    quantity: number;
-    totalPrice: number;
-    orderId: string;
-  };
-  PaymentInstructions: {
-    orderId: string;
-    paymentMethod: string;
-    amount: number;
-  };
 };
 
 export type TabParamList = {
@@ -44,33 +32,11 @@ export interface Concert {
   date: string;
   venue: string;
   price: number;
-  image_url: string; // Match backend field name
+  image: string;
   description: string;
-  total_tickets: number; // Match backend field name
-  available_tickets: number; // Match backend field name
-  status: number; // 0 = inactive, 1 = active
-  id_organizer: string; // Match backend field name
-  created_at?: string;
-  updated_at?: string;
-  queueCount?: number; // For frontend display
-}
-
-// Concert API Response Types
-export interface ConcertResponse {
-  id: string;
-  title: string;
-  artist: string;
-  date: string;
-  venue: string;
-  price: number;
-  image_url: string;
-  description: string;
-  total_tickets: number;
-  available_tickets: number;
-  status: number;
-  id_organizer: string;
-  created_at: string;
-  updated_at: string;
+  totalTickets: number;
+  availableTickets: number;
+  queueCount: number;
 }
 
 // Ticket Types
@@ -102,15 +68,6 @@ export interface RegisterCredentials {
   email: string;
   password: string;
   confirmPassword: string;
-}
-
-// Payment Types
-export interface PaymentMethod {
-  name: string;
-  icon: string;
-  type: 'bank' | 'ewallet' | 'qris';
-  number: string;
-  account_name: string;
 }
 
 // Theme Types

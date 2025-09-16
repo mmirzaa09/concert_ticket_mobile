@@ -8,6 +8,7 @@ import authReducer from './slices/authSlice';
 import concertsReducer from './slices/concertsSlice';
 import ticketsReducer from './slices/ticketsSlice';
 import paymentMethodReducer from './slices/paymentMethodSlice';
+import orderReducer from './slices/orderSlice';
 
 // Persist configuration
 const persistConfig = {
@@ -22,6 +23,7 @@ const rootReducer = combineReducers({
   concerts: concertsReducer,
   tickets: ticketsReducer,
   paymentMethod: paymentMethodReducer,
+  order: orderReducer,
 });
 
 // Persisted reducer
