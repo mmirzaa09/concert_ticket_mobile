@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useEffect} from 'react';
 import {
   View,
   Text,
@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import {BottomTabNavigationProp} from '@react-navigation/bottom-tabs';
 import {TabParamList} from '../../types';
-import {COLORS} from '../../constants';
+import {COLORS, APP_CONFIG} from '../../constants';
 import {globalStyles} from '../../styles/globalStyles';
 import {
   formatPrice,
@@ -19,7 +19,8 @@ import {
   spacing,
 } from '../../utils';
 import {useAppDispatch, useAppSelector} from '../../store/hooks';
-import {fetchUserTickets} from '../../store/slices/ticketsSlice';
+import {useAuth} from '../../context/AuthContext';
+import {getOrdersByUserId} from '../../store/slices/orderSlice';
 
 type HistoryScreenNavigationProp = BottomTabNavigationProp<
   TabParamList,
@@ -30,23 +31,20 @@ interface Props {
   navigation: HistoryScreenNavigationProp;
 }
 
-const HistoryScreen: React.FC<Props> = ({navigation: _navigation}) => {
+const HistoryScreen: React.FC<Props> = ({navigation}) => {
   const dispatch = useAppDispatch();
-  const {tickets, isLoading, error} = useAppSelector(state => state.tickets);
-  const {user} = useAppSelector(state => state.auth);
+  const {userOrders, loading} = useAppSelector(state => state.order);
+  const {state} = useAuth();
 
-  // Fetch user tickets on component mount
-  React.useEffect(() => {
-    if (user?.id) {
-      dispatch(fetchUserTickets(user.id));
-    }
-  }, [dispatch, user?.id]);
+  useEffect(() => {
+    dispatch(getOrdersByUserId(state.user.id));
+  }, [dispatch, state.user.id]);
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'active':
+      case 'paid':
         return COLORS.success;
-      case 'used':
+      case 'pending':
         return COLORS.textMuted;
       case 'cancelled':
         return COLORS.error;
@@ -57,10 +55,10 @@ const HistoryScreen: React.FC<Props> = ({navigation: _navigation}) => {
 
   const getStatusText = (status: string) => {
     switch (status) {
-      case 'active':
-        return 'Active';
-      case 'used':
-        return 'Used';
+      case 'paid':
+        return 'paid';
+      case 'pending':
+        return 'pending';
       case 'cancelled':
         return 'Cancelled';
       default:
@@ -68,28 +66,43 @@ const HistoryScreen: React.FC<Props> = ({navigation: _navigation}) => {
     }
   };
 
-  const renderTicketItem = ({item}: {item: (typeof tickets)[0]}) => (
-    <TouchableOpacity style={styles.ticketCard}>
-      <Image source={{uri: item.concertImage}} style={styles.ticketImage} />
-      <View style={styles.ticketInfo}>
-        <Text style={styles.ticketTitle}>{item.concertTitle}</Text>
-        <Text style={styles.ticketVenue}>{item.venue}</Text>
-        <Text style={styles.ticketDate}>
-          Purchased: {formatDate(item.purchaseDate)}
-        </Text>
-        <View style={styles.ticketFooter}>
-          <Text style={styles.ticketPrice}>{formatPrice(item.price)}</Text>
-          <View
-            style={[
-              styles.statusBadge,
-              {backgroundColor: getStatusColor(item.status)},
-            ]}>
-            <Text style={styles.statusText}>{getStatusText(item.status)}</Text>
+  const handleRedirectToConcert = (concertId: string) => {
+    // Navigate to ConcertDetail screen with concertId
+    navigation.navigate('ConcertDetail', {concertId});
+  };
+
+  const renderTicketItem = ({item}: {item: (typeof userOrders)[0]}) => {
+    const concert = item.concert;
+    return (
+      <TouchableOpacity
+        style={styles.ticketCard}
+        onPress={() => handleRedirectToConcert(concert.id_concert)}>
+        <Image
+          source={{uri: `${APP_CONFIG.API_IMAGE}${concert.image_url}`}}
+          style={styles.ticketImage}
+        />
+        <View style={styles.ticketInfo}>
+          <Text style={styles.ticketTitle}>{concert.concertTitle}</Text>
+          <Text style={styles.ticketVenue}>{concert.venue}</Text>
+          <Text style={styles.ticketDate}>
+            Event Date: {formatDate(concert.date)}
+          </Text>
+          <View style={styles.ticketFooter}>
+            <Text style={styles.ticketPrice}>{formatPrice(concert.price)}</Text>
+            <View
+              style={[
+                styles.statusBadge,
+                {backgroundColor: getStatusColor(item.status)},
+              ]}>
+              <Text style={styles.statusText}>
+                {getStatusText(item.status)}
+              </Text>
+            </View>
           </View>
         </View>
-      </View>
-    </TouchableOpacity>
-  );
+      </TouchableOpacity>
+    );
+  };
 
   return (
     <SafeAreaView style={globalStyles.container}>
@@ -98,22 +111,14 @@ const HistoryScreen: React.FC<Props> = ({navigation: _navigation}) => {
         <Text style={styles.headerSubtitle}>Your concert journey</Text>
       </View>
 
-      {error ? (
-        <View style={styles.emptyState}>
-          <Text style={styles.emptyTitle}>Error loading tickets</Text>
-          <Text style={styles.emptySubtitle}>
-            Failed to load your ticket history. Please try again.
-          </Text>
-        </View>
-      ) : tickets.length > 0 ? (
+      {userOrders.length > 0 ? (
         <FlatList
-          data={tickets}
+          data={userOrders}
           renderItem={renderTicketItem}
           keyExtractor={item => item.id}
           contentContainerStyle={styles.listContainer}
           showsVerticalScrollIndicator={false}
-          refreshing={isLoading}
-          onRefresh={() => user?.id && dispatch(fetchUserTickets(user.id))}
+          refreshing={loading}
         />
       ) : (
         <View style={styles.emptyState}>

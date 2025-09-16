@@ -17,6 +17,7 @@ export interface Order {
 // Define the state interface
 export interface OrderState {
   currentOrder: Order | null;
+  userOrders: Order[];
   loading: boolean;
   error: string | null;
   success: boolean;
@@ -25,6 +26,7 @@ export interface OrderState {
 // Initial state
 const initialState: OrderState = {
   currentOrder: null,
+  userOrders: [],
   loading: false,
   error: null,
   success: false,
@@ -63,6 +65,29 @@ export const createOrderInquiry = createAsyncThunk(
   },
 );
 
+// Async thunk for getting orders by user ID
+export const getOrdersByUserId = createAsyncThunk(
+  'order/getOrdersByUserId',
+  async (id_user: string, {rejectWithValue}) => {
+    try {
+      const response = await apiService.getOrdersByUserId(id_user);
+
+      if (response.success && response.data) {
+        return response.data;
+      } else {
+        return rejectWithValue(response.message || 'Failed to fetch orders');
+      }
+    } catch (error: any) {
+      console.error('Error fetching orders by user ID:', error);
+      return rejectWithValue(
+        error.response?.data?.message ||
+          error.message ||
+          'Failed to fetch orders',
+      );
+    }
+  },
+);
+
 // Create the slice
 const orderSlice = createSlice({
   name: 'order',
@@ -73,6 +98,9 @@ const orderSlice = createSlice({
       state.error = null;
       state.success = false;
     },
+    clearUserOrders: state => {
+      state.userOrders = [];
+    },
     clearError: state => {
       state.error = null;
     },
@@ -81,6 +109,7 @@ const orderSlice = createSlice({
     },
     resetOrderState: state => {
       state.currentOrder = null;
+      state.userOrders = [];
       state.loading = false;
       state.error = null;
       state.success = false;
@@ -105,13 +134,33 @@ const orderSlice = createSlice({
         state.error = action.payload as string;
         state.success = false;
         state.currentOrder = null;
+      })
+      // Get orders by user ID
+      .addCase(getOrdersByUserId.pending, state => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(getOrdersByUserId.fulfilled, (state, action) => {
+        state.loading = false;
+        state.userOrders = action.payload;
+        state.error = null;
+      })
+      .addCase(getOrdersByUserId.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+        state.userOrders = [];
       });
   },
 });
 
 // Export actions
-export const {clearOrder, clearError, clearSuccess, resetOrderState} =
-  orderSlice.actions;
+export const {
+  clearOrder,
+  clearUserOrders,
+  clearError,
+  clearSuccess,
+  resetOrderState,
+} = orderSlice.actions;
 
 // Selectors
 export const selectCurrentOrder = (state: {order: OrderState}) =>
@@ -125,6 +174,9 @@ export const selectOrderError = (state: {order: OrderState}) =>
 
 export const selectOrderSuccess = (state: {order: OrderState}) =>
   state.order.success;
+
+export const selectUserOrders = (state: {order: OrderState}) =>
+  state.order.userOrders;
 
 // Helper selectors
 export const selectIsOrderExpired = (state: {order: OrderState}) => {

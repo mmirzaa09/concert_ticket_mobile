@@ -78,6 +78,7 @@ export const API_ENDPOINTS = {
 
   // Orders
   ORDER_INQUIRY: '/order/inquiry',
+  ORDERS_BY_USER: '/order/:id_user',
 
   // Payment method
   PAYMENT_METHODS: '/payment-method',

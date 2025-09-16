@@ -213,6 +213,15 @@ const createApiService = () => {
         },
         true, // requireAuth = true
       ),
+
+    getOrdersByUserId: (id_user: string): Promise<ApiResponse<any>> =>
+      request<any>(
+        API_ENDPOINTS.ORDERS_BY_USER.replace(':id_user', id_user),
+        {
+          method: 'GET',
+        },
+        true, // requireAuth = true
+      ),
   };
 };
 
