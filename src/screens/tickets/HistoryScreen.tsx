@@ -9,7 +9,9 @@ import {
   SafeAreaView,
 } from 'react-native';
 import {BottomTabNavigationProp} from '@react-navigation/bottom-tabs';
-import {TabParamList} from '../../types';
+import {CompositeNavigationProp} from '@react-navigation/native';
+import {StackNavigationProp} from '@react-navigation/stack';
+import {TabParamList, RootStackParamList} from '../../types';
 import {COLORS, APP_CONFIG} from '../../constants';
 import {globalStyles} from '../../styles/globalStyles';
 import {
@@ -22,9 +24,9 @@ import {useAppDispatch, useAppSelector} from '../../store/hooks';
 import {useAuth} from '../../context/AuthContext';
 import {getOrdersByUserId} from '../../store/slices/orderSlice';
 
-type HistoryScreenNavigationProp = BottomTabNavigationProp<
-  TabParamList,
-  'History'
+type HistoryScreenNavigationProp = CompositeNavigationProp<
+  BottomTabNavigationProp<TabParamList, 'History'>,
+  StackNavigationProp<RootStackParamList>
 >;
 
 interface Props {
@@ -71,12 +73,24 @@ const HistoryScreen: React.FC<Props> = ({navigation}) => {
     navigation.navigate('ConcertDetail', {concertId});
   };
 
+  const handlePendingOrderPress = (order: (typeof userOrders)[0]) => {
+    if (order.status === 'pending') {
+      navigation.navigate('PaymentInstructions', {
+        paymentMethod: order.id_method,
+        orderId: order.id_order,
+        fromHistory: true,
+      });
+    } else {
+      handleRedirectToConcert(order.id_concert);
+    }
+  };
+
   const renderTicketItem = ({item}: {item: (typeof userOrders)[0]}) => {
     const concert = item.concert;
     return (
       <TouchableOpacity
         style={styles.ticketCard}
-        onPress={() => handleRedirectToConcert(concert.id_concert)}>
+        onPress={() => handlePendingOrderPress(item)}>
         <Image
           source={{uri: `${APP_CONFIG.API_IMAGE}${concert.image_url}`}}
           style={styles.ticketImage}
@@ -99,6 +113,9 @@ const HistoryScreen: React.FC<Props> = ({navigation}) => {
               </Text>
             </View>
           </View>
+          {item.status === 'pending' && (
+            <Text style={styles.pendingHint}>Tap to complete payment</Text>
+          )}
         </View>
       </TouchableOpacity>
     );
@@ -226,6 +243,13 @@ const styles = StyleSheet.create({
     color: COLORS.textSecondary,
     textAlign: 'center',
     lineHeight: 24,
+  },
+  pendingHint: {
+    fontSize: responsiveFontSize(12),
+    color: COLORS.primary,
+    fontStyle: 'italic',
+    marginTop: spacing.xs,
+    textAlign: 'center',
   },
 });
 

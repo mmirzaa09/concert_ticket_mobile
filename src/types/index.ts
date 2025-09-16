@@ -7,6 +7,11 @@ export type RootStackParamList = {
   ConcertDetail: {concertId: string};
   TicketPurchase: {concertId: string};
   Queue: {concertId: string};
+  PaymentInstructions: {
+    paymentMethod: string;
+    orderId?: string;
+    fromHistory?: boolean;
+  };
 };
 
 export type TabParamList = {

@@ -59,7 +59,7 @@ const PaymentScreen: React.FC<Props> = ({navigation}) => {
     setIsProcessing(true);
 
     const paymentData = {
-      paymentMethod: selectedPayment,
+      id_method: selectedPayment,
       id_concert: concert.id_concert,
       id_user: idUser,
       total_price: totalPrice,

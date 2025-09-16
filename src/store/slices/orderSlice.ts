@@ -35,6 +35,7 @@ const initialState: OrderState = {
 // Define the payload interface for creating order inquiry
 export interface CreateOrderInquiryPayload {
   id_user: string;
+  id_method: string;
   id_concert: string;
   quantity: number;
   total_price: number;
