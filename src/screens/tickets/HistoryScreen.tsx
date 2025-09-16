@@ -9,7 +9,7 @@ import {
   SafeAreaView,
 } from 'react-native';
 import {BottomTabNavigationProp} from '@react-navigation/bottom-tabs';
-import {TabParamList, Ticket} from '../../types';
+import {TabParamList} from '../../types';
 import {COLORS} from '../../constants';
 import {globalStyles} from '../../styles/globalStyles';
 import {

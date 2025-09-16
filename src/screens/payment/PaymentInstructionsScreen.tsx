@@ -8,10 +8,10 @@ import {
   ScrollView,
   Clipboard,
   Alert,
+  BackHandler,
   Image,
-  Platform,
 } from 'react-native';
-import {RouteProp, useRoute} from '@react-navigation/native';
+import {RouteProp, useRoute, useFocusEffect} from '@react-navigation/native';
 import {StackNavigationProp} from '@react-navigation/stack';
 import {launchImageLibrary, MediaType} from 'react-native-image-picker';
 import {RootStackParamList} from '../../types';
@@ -19,11 +19,11 @@ import {COLORS} from '../../constants';
 import {responsiveFontSize, spacing} from '../../utils';
 import {useAppSelector, useAppDispatch} from '../../store/hooks';
 import {
-  selectCurrentOrder,
   selectIsOrderExpired,
   selectOrderTimeRemaining,
 } from '../../store/slices/orderSlice';
 import {fetchPaymentMethodsById} from '../../store/slices/paymentMethodSlice';
+import images from '../../assets';
 
 // Navigation types
 export type PaymentInstructionsRouteProp = RouteProp<
@@ -51,7 +51,6 @@ const formatPrice = (price: number) =>
     style: 'currency',
     currency: 'IDR',
     minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
   }).format(price);
 
 const formatTimeRemaining = (expiryDate: Date) => {
@@ -150,6 +149,52 @@ const PaymentInstructionsScreen: React.FC<Props> = ({navigation}) => {
     dispatch(fetchPaymentMethodsById(route.params.paymentMethod));
   }, [dispatch, route.params.paymentMethod]);
 
+  // Handle hardware back button and navigation back button
+  const handleBackPress = React.useCallback(() => {
+    navigation.reset({
+      index: 0,
+      routes: [{name: 'MainTabs'}],
+    });
+    return true; // Prevent default back behavior
+  }, [navigation]);
+
+  // Override hardware back button
+  useFocusEffect(
+    React.useCallback(() => {
+      const onBackPress = () => {
+        handleBackPress();
+        return true;
+      };
+
+      BackHandler.addEventListener('hardwareBackPress', onBackPress);
+
+      return () =>
+        BackHandler.removeEventListener('hardwareBackPress', onBackPress);
+    }, [handleBackPress]),
+  );
+
+  // Set custom header with back button
+  React.useLayoutEffect(() => {
+    navigation.setOptions({
+      headerLeft: () => (
+        <TouchableOpacity
+          onPress={handleBackPress}
+          style={styles.headerBackButton}>
+          <Image
+              source={images.arrowLeft}
+              style={styles.headerBackText}
+              resizeMode="contain"
+            />
+        </TouchableOpacity>
+      ),
+      headerStyle: {
+        backgroundColor: COLORS.primary,
+      },
+      headerTintColor: COLORS.white,
+      headerTitle: 'Payment Instructions',
+    });
+  }, [navigation, handleBackPress]);
+
   const copyToClipboard = (text: string) => {
     Clipboard.setString(text);
     Alert.alert('Copied', 'Account details copied to clipboard');
@@ -209,8 +254,6 @@ const PaymentInstructionsScreen: React.FC<Props> = ({navigation}) => {
 
     setIsSubmitting(true);
 
-    // Simulate API call to submit payment proof
-    // In real app, you would integrate with your payment verification API
     setTimeout(() => {
       setIsSubmitting(false);
       Alert.alert(
@@ -479,33 +522,8 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.error,
     opacity: 0.1,
   },
-  errorText: {
-    fontSize: responsiveFontSize(14),
-    color: COLORS.error,
-    textAlign: 'center',
-  },
-  errorSubText: {
-    fontSize: responsiveFontSize(12),
-    color: COLORS.textSecondary,
-    textAlign: 'center',
-    marginTop: spacing.xs,
-  },
-  retryButton: {
-    backgroundColor: COLORS.primary,
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.sm,
-    borderRadius: 6,
-    marginTop: spacing.md,
-    alignSelf: 'center',
-  },
-  retryButtonText: {
-    fontSize: responsiveFontSize(14),
-    color: COLORS.white,
-    fontWeight: '600',
-  },
   // Amount Section
   amountSection: {
-    // backgroundColor: COLORS.white,
     margin: spacing.md,
     padding: spacing.xl,
     borderRadius: 12,
@@ -533,7 +551,6 @@ const styles = StyleSheet.create({
   },
   // Deadline Section
   deadlineSection: {
-    // backgroundColor: COLORS.white,
     margin: spacing.md,
     marginTop: 0,
     padding: spacing.lg,
@@ -573,7 +590,6 @@ const styles = StyleSheet.create({
   },
   // Bank Details Section
   bankDetailsSection: {
-    // backgroundColor: COLORS.white,
     margin: spacing.md,
     marginTop: 0,
     padding: spacing.lg,
@@ -608,6 +624,7 @@ const styles = StyleSheet.create({
   accountNumberContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     backgroundColor: COLORS.background,
     padding: spacing.md,
     borderRadius: 8,
@@ -739,6 +756,15 @@ const styles = StyleSheet.create({
     color: COLORS.textSecondary,
     lineHeight: 20,
     marginBottom: spacing.sm,
+  },
+  headerBackButton: {
+    padding: 10,
+    marginLeft: 5,
+  },
+  headerBackText: {
+    width: 20,
+    height: 20,
+    tintColor: COLORS.text,
   },
 });
 
