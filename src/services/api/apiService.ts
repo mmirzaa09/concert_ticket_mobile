@@ -1,4 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import axios, {AxiosRequestConfig, AxiosResponse} from 'axios';
 import {APP_CONFIG, API_ENDPOINTS, STORAGE_KEYS} from '../../constants';
 import {ApiResponse, LoginCredentials} from '../../types';
 
@@ -43,53 +44,50 @@ const createApiService = () => {
 
   const request = async <T>(
     endpoint: string,
-    options: RequestInit = {},
+    options: {
+      method?: 'GET' | 'POST' | 'PUT' | 'DELETE';
+      body?: string;
+      headers?: Record<string, string>;
+    } = {},
     requireAuth: boolean = false,
   ): Promise<ApiResponse<T>> => {
     const url = `${baseURL}${endpoint}`;
 
     // Create headers (with or without auth)
     const headers = requireAuth
-      ? await createAuthHeaders(options.headers as Record<string, string>)
+      ? await createAuthHeaders(options.headers)
       : {
           'Content-Type': 'application/json',
-          ...(options.headers as Record<string, string>),
+          ...options.headers,
         };
 
-    const config: RequestInit = {
-      ...options,
+    const config: AxiosRequestConfig = {
+      url,
+      method: options.method || 'GET',
       headers,
+      timeout,
+      ...(options.body && {data: JSON.parse(options.body)}),
     };
 
     try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), timeout);
+      const response: AxiosResponse = await axios(config);
 
-      const response = await fetch(url, {
-        ...config,
-        signal: controller.signal,
-      });
-      clearTimeout(timeoutId);
-
-      const contentType = response.headers.get('content-type');
-      let data;
-
-      if (contentType && contentType.includes('application/json')) {
-        data = await response.json();
-      } else {
-        const textData = await response.text();
-        console.log('Non-JSON response:', textData);
-
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      return {
+        success:
+          response.data?.success !== undefined ? response.data.success : true,
+        data: response.data?.data || response.data,
+        message: response.data?.message,
+        status_code: response.status,
+      };
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        // Handle timeout specifically
+        if (error.code === 'ECONNABORTED') {
+          throw new Error('Request timeout');
         }
 
-        data = {success: true, data: textData, message: 'Success'};
-      }
-
-      if (!response.ok) {
         // Handle 401 Unauthorized specifically
-        if (response.status === 401) {
+        if (error.response?.status === 401) {
           // Clear token and redirect to login
           await AsyncStorage.removeItem(STORAGE_KEYS.USER_TOKEN);
 
@@ -101,21 +99,20 @@ const createApiService = () => {
           throw new Error('Session expired. Please login again.');
         }
 
-        throw new Error(
-          data.message || `HTTP ${response.status}: ${response.statusText}`,
-        );
+        // Handle other HTTP errors
+        if (error.response) {
+          const errorMessage =
+            error.response.data?.message ||
+            `HTTP ${error.response.status}: ${error.response.statusText}`;
+          throw new Error(errorMessage);
+        }
+
+        // Handle network errors
+        if (error.request) {
+          throw new Error('Network error. Please check your connection.');
+        }
       }
 
-      return {
-        success: data.success || true,
-        data: data.data || data,
-        message: data.message,
-        status_code: response.status,
-      };
-    } catch (error) {
-      if (error instanceof Error && error.name === 'AbortError') {
-        throw new Error('Request timeout');
-      }
       throw new Error(
         error instanceof Error ? error.message : 'Unknown error occurred',
       );

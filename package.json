@@ -16,6 +16,7 @@
     "@react-navigation/native": "^7.1.17",
     "@react-navigation/stack": "^7.4.5",
     "@reduxjs/toolkit": "^2.8.2",
+    "axios": "^1.12.2",
     "react": "18.2.0",
     "react-native": "0.73.11",
     "react-native-gesture-handler": "2.15.0",

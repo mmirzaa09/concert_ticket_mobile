@@ -60,6 +60,7 @@ export interface ApiResponse<T> {
   success: boolean;
   data: T;
   message?: string;
+  status_code?: number;
 }
 
 // Auth Types
