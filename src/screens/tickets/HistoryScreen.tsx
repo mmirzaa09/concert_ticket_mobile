@@ -76,7 +76,7 @@ const HistoryScreen: React.FC<Props> = ({navigation}) => {
   const handlePendingOrderPress = (order: (typeof userOrders)[0]) => {
     if (order.status === 'pending') {
       navigation.navigate('PaymentInstructions', {
-        paymentMethod: order.id_method,
+        id_method: order.id_method,
         orderId: order.id_order,
         fromHistory: true,
       });
@@ -132,7 +132,7 @@ const HistoryScreen: React.FC<Props> = ({navigation}) => {
         <FlatList
           data={userOrders}
           renderItem={renderTicketItem}
-          keyExtractor={item => item.id}
+          keyExtractor={item => item.id_order}
           contentContainerStyle={styles.listContainer}
           showsVerticalScrollIndicator={false}
           refreshing={loading}

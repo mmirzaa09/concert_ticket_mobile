@@ -11,6 +11,7 @@ export type RootStackParamList = {
     paymentMethod: string;
     orderId?: string;
     fromHistory?: boolean;
+    from?: string;
   };
 };
 

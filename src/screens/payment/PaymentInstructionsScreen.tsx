@@ -87,7 +87,7 @@ const PaymentInstructionsScreen: React.FC<Props> = ({navigation}) => {
 
   // Get payment details from Redux state or fallback to route params
   const paymentAmount = currentOrder?.total_price;
-  const orderIdToShow = currentOrder?.id_orders;
+  const orderIdToShow = currentOrder?.id_order;
 
   // Calculate payment deadline from order or default to 3 hours
   const paymentDeadline = React.useMemo(() => {
@@ -146,8 +146,8 @@ const PaymentInstructionsScreen: React.FC<Props> = ({navigation}) => {
 
   // Fetch payment methods if not already loaded
   useEffect(() => {
-    dispatch(fetchPaymentMethodsById(route.params.paymentMethod));
-  }, [dispatch, route.params.paymentMethod]);
+    dispatch(fetchPaymentMethodsById(route.params.id_method));
+  }, [dispatch, route.params.id_method]);
 
   // Handle hardware back button and navigation back button
   const handleBackPress = React.useCallback(() => {

@@ -324,10 +324,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({children}) => {
         await apiService.logout();
         console.log('API logout completed');
       } catch (apiError) {
-        console.warn(
-          'API logout failed, but local logout continues:',
-          apiError,
-        );
+        console.log('API logout failed, but local logout continues:', apiError);
       }
     } catch (error) {
       console.error('Logout error:', error);

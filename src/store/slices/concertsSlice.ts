@@ -11,7 +11,7 @@ export const fetchConcerts = createAsyncThunk(
 
       return response.data;
     } catch (error: any) {
-      console.warn('API failed, using mock data:', error);
+      console.log('API failed, using mock data:', error);
       return;
     }
   },
