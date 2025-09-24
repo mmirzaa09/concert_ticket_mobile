@@ -219,6 +219,15 @@ const createApiService = () => {
         },
         true, // requireAuth = true
       ),
+
+    getOrderById: (id_order: string): Promise<ApiResponse<any>> =>
+      request<any>(
+        API_ENDPOINTS.ORDERS_BY_ID_ORDER.replace(':id_order', id_order),
+        {
+          method: 'GET',
+        },
+        true, // requireAuth = true
+      ),
   };
 };
 

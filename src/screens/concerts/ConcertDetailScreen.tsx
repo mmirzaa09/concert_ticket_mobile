@@ -8,20 +8,14 @@ import {
   ScrollView,
   SafeAreaView,
 } from 'react-native';
-import {RouteProp, useRoute} from '@react-navigation/native';
 import {StackNavigationProp} from '@react-navigation/stack';
 import {RootStackParamList} from '../../types';
 import {COLORS} from '../../constants';
 import {responsiveFontSize, spacing} from '../../utils';
-import {useAppDispatch, useAppSelector} from '../../store/hooks';
-import {fetchConcertById} from '../../store/slices/concertsSlice';
+import {useAppSelector} from '../../store/hooks';
 import images from '../../assets';
 import {APP_CONFIG} from '../../constants';
 
-type ConcertDetailScreenRouteProp = RouteProp<
-  RootStackParamList,
-  'ConcertDetail'
->;
 type ConcertDetailScreenNavigationProp = StackNavigationProp<
   RootStackParamList,
   'ConcertDetail'
@@ -59,19 +53,15 @@ const formatTime = (dateString: string): string => {
 };
 
 const ConcertDetailScreen: React.FC<Props> = ({navigation}) => {
-  const route = useRoute<ConcertDetailScreenRouteProp>();
-  const {concertId} = route.params;
-  const dispatch = useAppDispatch();
   const {selectedConcert} = useAppSelector(state => state.concerts);
 
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     setTimeout(() => {
-      dispatch(fetchConcertById(concertId));
       setIsLoading(false);
     }, 1000);
-  }, [concertId, dispatch]);
+  }, []);
 
   const handlePurchaseTicket = () => {
     navigation.navigate('ConcertInquiry', {

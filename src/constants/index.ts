@@ -4,8 +4,8 @@ export const APP_CONFIG = {
   // API_BASE_URL: __DEV__
   //   ? 'http://192.168.1.9:8000'
   //   : 'https://api.queueless.com',
-  API_BASE_URL: 'http://192.168.1.135:3030/api',
-  API_IMAGE: 'http://192.168.1.135:3030/uploads/',
+  API_BASE_URL: 'http://10.162.170.183:3030/api',
+  API_IMAGE: 'http://10.162.170.183:3030/uploads/',
   API_TIMEOUT: 10000,
 };
 
@@ -78,7 +78,8 @@ export const API_ENDPOINTS = {
 
   // Orders
   ORDER_INQUIRY: '/order/inquiry',
-  ORDERS_BY_USER: '/order/:id_user',
+  ORDERS_BY_USER: '/order/user/:id_user',
+  ORDERS_BY_ID_ORDER: '/order/:id_order',
 
   // Payment method
   PAYMENT_METHODS: '/payment-method',

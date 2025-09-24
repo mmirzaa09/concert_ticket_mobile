@@ -1,6 +1,19 @@
 import {createSlice, createAsyncThunk} from '@reduxjs/toolkit';
 import {apiService} from '../../services/api/apiService';
 
+// Define the concert interface for nested concert data
+export interface Concert {
+  id_concert: string;
+  title: string;
+  artist: string;
+  venue: string;
+  date: string;
+  price: number;
+  available_tickets: number;
+  description: string;
+  image_url: string;
+}
+
 // Define the order interface based on the backend model
 export interface Order {
   id_order?: string;
@@ -12,6 +25,7 @@ export interface Order {
   reservation_expired: string;
   created_at?: string;
   updated_at?: string;
+  concert?: Concert;
 }
 
 // Define the state interface
@@ -89,6 +103,29 @@ export const getOrdersByUserId = createAsyncThunk(
   },
 );
 
+// Async thunk for getting order by ID
+export const getOrderById = createAsyncThunk(
+  'order/getOrderById',
+  async (id_order: string, {rejectWithValue}) => {
+    try {
+      const response = await apiService.getOrderById(id_order);
+
+      if (response.success && response.data) {
+        return response.data;
+      } else {
+        return rejectWithValue(response.message || 'Failed to fetch order');
+      }
+    } catch (error: any) {
+      console.error('Error fetching order by ID:', error);
+      return rejectWithValue(
+        error.response?.data?.message ||
+          error.message ||
+          'Failed to fetch order',
+      );
+    }
+  },
+);
+
 // Create the slice
 const orderSlice = createSlice({
   name: 'order',
@@ -150,6 +187,21 @@ const orderSlice = createSlice({
         state.loading = false;
         state.error = action.payload as string;
         state.userOrders = [];
+      })
+      // Get order by ID
+      .addCase(getOrderById.pending, state => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(getOrderById.fulfilled, (state, action) => {
+        state.loading = false;
+        state.currentOrder = action.payload;
+        state.error = null;
+      })
+      .addCase(getOrderById.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+        state.currentOrder = null;
       });
   },
 });

@@ -22,7 +22,8 @@ import {
 } from '../../utils';
 import {useAppDispatch, useAppSelector} from '../../store/hooks';
 import {useAuth} from '../../context/AuthContext';
-import {getOrdersByUserId} from '../../store/slices/orderSlice';
+import {getOrdersByUserId, getOrderById} from '../../store/slices/orderSlice';
+import {useGlobalModalContext} from '../../context/GlobalModalContext';
 
 type HistoryScreenNavigationProp = CompositeNavigationProp<
   BottomTabNavigationProp<TabParamList, 'History'>,
@@ -37,6 +38,7 @@ const HistoryScreen: React.FC<Props> = ({navigation}) => {
   const dispatch = useAppDispatch();
   const {userOrders, loading} = useAppSelector(state => state.order);
   const {state} = useAuth();
+  const {showError} = useGlobalModalContext();
 
   useEffect(() => {
     dispatch(getOrdersByUserId(state.user.id));
@@ -48,6 +50,8 @@ const HistoryScreen: React.FC<Props> = ({navigation}) => {
         return COLORS.success;
       case 'pending':
         return COLORS.textMuted;
+      case 'expired':
+        return COLORS.error;
       case 'cancelled':
         return COLORS.error;
       default:
@@ -63,26 +67,37 @@ const HistoryScreen: React.FC<Props> = ({navigation}) => {
         return 'pending';
       case 'cancelled':
         return 'Cancelled';
+      case 'expired':
+        return 'Expired';
       default:
         return 'Unknown';
     }
   };
 
   const handleRedirectToConcert = (concertId: string) => {
-    // Navigate to ConcertDetail screen with concertId
     navigation.navigate('ConcertDetail', {concertId});
   };
 
-  const handlePendingOrderPress = (order: (typeof userOrders)[0]) => {
-    if (order.status === 'pending') {
-      navigation.navigate('PaymentInstructions', {
-        id_method: order.id_method,
-        orderId: order.id_order,
-        fromHistory: true,
-      });
-    } else {
-      handleRedirectToConcert(order.id_concert);
+  const handlePendingOrderPress = async (order: (typeof userOrders)[0]) => {
+    if (order.status === 'expired' || order.status === 'cancelled') {
+      return showError('Sorry', 'Your order has been expired.');
     }
+
+    await dispatch(getOrderById(order.id_order)).then(response => {
+      if (response.error) {
+        showError('Sorry', 'Order details not found. Please try again.');
+        return;
+      }
+      if (order.status === 'pending') {
+        navigation.navigate('PaymentInstructions', {
+          id_method: order.id_method,
+          orderId: order.id_order,
+          fromHistory: true,
+        });
+      } else {
+        handleRedirectToConcert(order.id_concert);
+      }
+    });
   };
 
   const renderTicketItem = ({item}: {item: (typeof userOrders)[0]}) => {

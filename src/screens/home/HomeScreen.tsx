@@ -16,7 +16,10 @@ import {COLORS} from '../../constants';
 import {globalStyles} from '../../styles/globalStyles';
 import {formatPrice, responsiveFontSize, spacing} from '../../utils';
 import {useAppDispatch, useAppSelector} from '../../store/hooks';
-import {fetchConcerts} from '../../store/slices/concertsSlice';
+import {
+  fetchConcerts,
+  fetchConcertById,
+} from '../../store/slices/concertsSlice';
 import {APP_CONFIG} from '../../constants';
 
 type HomeScreenNavigationProp = CompositeNavigationProp<
@@ -40,9 +43,10 @@ const HomeScreen: React.FC<Props> = ({navigation}) => {
     return (
       <TouchableOpacity
         style={styles.concertCard}
-        onPress={() =>
-          navigation.navigate('ConcertDetail', {concertId: item.id_concert})
-        }>
+        onPress={() => {
+          dispatch(fetchConcertById(item.id_concert));
+          navigation.navigate('ConcertDetail');
+        }}>
         <Image
           source={{uri: `${APP_CONFIG.API_IMAGE}${item.image_url}`}}
           style={styles.concertImage}
