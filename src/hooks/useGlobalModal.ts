@@ -124,12 +124,17 @@ export const useGlobalModal = () => {
 
       showModal('confirm', title, message, buttons, {showCloseButton: false});
     },
-    [showModal],
+    [hideModal, showModal],
   );
 
   // Custom modal with multiple buttons
   const showCustom = useCallback(
-    (type: ModalType, title: string, message: string, buttons: ModalButton[]) => {
+    (
+      type: ModalType,
+      title: string,
+      message: string,
+      buttons: ModalButton[],
+    ) => {
       showModal(type, title, message, buttons, {showCloseButton: false});
     },
     [showModal],
@@ -141,7 +146,9 @@ export const useGlobalModal = () => {
 
   const confirmAction = useCallback(() => {
     if (modalState.buttons.length > 0) {
-      const confirmButton = modalState.buttons.find(btn => btn.style !== 'cancel');
+      const confirmButton = modalState.buttons.find(
+        btn => btn.style !== 'cancel',
+      );
       confirmButton?.onPress();
     }
     hideModal();
@@ -149,7 +156,9 @@ export const useGlobalModal = () => {
 
   const cancelAction = useCallback(() => {
     if (modalState.buttons.length > 0) {
-      const cancelButton = modalState.buttons.find(btn => btn.style === 'cancel');
+      const cancelButton = modalState.buttons.find(
+        btn => btn.style === 'cancel',
+      );
       cancelButton?.onPress();
     }
     hideModal();

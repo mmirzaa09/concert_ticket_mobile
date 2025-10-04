@@ -149,13 +149,14 @@ const GlobalModal: React.FC<GlobalModalProps> = ({
       onRequestClose={onClose}>
       <View style={styles.overlay}>
         <View style={styles.modalContainer}>
-          <View style={[styles.iconContainer, {backgroundColor: getModalColor()}]}>
+          <View
+            style={[styles.iconContainer, {backgroundColor: getModalColor()}]}>
             <Text style={styles.icon}>{getModalIcon()}</Text>
           </View>
-          
+
           <Text style={styles.title}>{title}</Text>
           <Text style={styles.message}>{message}</Text>
-          
+
           {statusCode && (
             <Text style={styles.statusCode}>Error Code: {statusCode}</Text>
           )}
@@ -242,7 +243,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   defaultButtonText: {
-    color: COLORS.surface,
+    color: COLORS.textSecondary,
   },
   cancelButtonText: {
     color: COLORS.text,
@@ -273,13 +274,13 @@ const styles = StyleSheet.create({
   },
   confirmButton: {
     flex: 1,
-    backgroundColor: COLORS.primary,
+    backgroundColor: COLORS.white,
     paddingVertical: spacing.md,
     borderRadius: 12,
     alignItems: 'center',
   },
   confirmButtonText: {
-    color: COLORS.surface,
+    color: COLORS.white,
     fontSize: responsiveFontSize(16),
     fontWeight: '600',
   },

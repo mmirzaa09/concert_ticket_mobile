@@ -7,7 +7,6 @@ import {
   SafeAreaView,
   ScrollView,
   Clipboard,
-  Alert,
   BackHandler,
   Image,
 } from 'react-native';
@@ -24,6 +23,7 @@ import {
 } from '../../store/slices/orderSlice';
 import {fetchPaymentMethodsById} from '../../store/slices/paymentMethodSlice';
 import images from '../../assets';
+import {useGlobalModalContext} from '../../context/GlobalModalContext';
 
 // Navigation types
 export type PaymentInstructionsRouteProp = RouteProp<
@@ -70,6 +70,8 @@ const formatTimeRemaining = (expiryDate: Date) => {
 
 const PaymentInstructionsScreen: React.FC<Props> = ({navigation}) => {
   const route = useRoute<PaymentInstructionsRouteProp>();
+  const {showSuccess, showError, showCustom, hideModal} =
+    useGlobalModalContext();
 
   // Redux state
   const dispatch = useAppDispatch();
@@ -173,36 +175,46 @@ const PaymentInstructionsScreen: React.FC<Props> = ({navigation}) => {
     }, [handleBackPress]),
   );
 
+  // Custom header back button component
+  const HeaderBackButton = React.useCallback(
+    () => (
+      <TouchableOpacity
+        onPress={handleBackPress}
+        style={styles.headerBackButton}>
+        <Image
+          source={images.arrowLeft}
+          style={styles.headerBackText}
+          resizeMode="contain"
+        />
+      </TouchableOpacity>
+    ),
+    [handleBackPress],
+  );
+
   // Set custom header with back button
   React.useLayoutEffect(() => {
     navigation.setOptions({
-      headerLeft: () => (
-        <TouchableOpacity
-          onPress={handleBackPress}
-          style={styles.headerBackButton}>
-          <Image
-              source={images.arrowLeft}
-              style={styles.headerBackText}
-              resizeMode="contain"
-            />
-        </TouchableOpacity>
-      ),
+      headerLeft: HeaderBackButton,
       headerStyle: {
         backgroundColor: COLORS.primary,
       },
       headerTintColor: COLORS.white,
       headerTitle: 'Payment Instructions',
     });
-  }, [navigation, handleBackPress]);
+  }, [navigation, HeaderBackButton]);
 
   const copyToClipboard = (text: string) => {
     Clipboard.setString(text);
-    Alert.alert('Copied', 'Account details copied to clipboard');
+    showSuccess('Copied', 'Account details copied to clipboard');
   };
 
   const handleFileUpload = () => {
-    Alert.alert('Upload Proof of Payment', 'Choose an option', [
-      {text: 'Cancel', style: 'cancel'},
+    const buttons = [
+      {
+        text: 'Cancel',
+        onPress: () => hideModal(),
+        style: 'cancel' as const,
+      },
       {
         text: 'Photo Library',
         onPress: () => {
@@ -213,6 +225,7 @@ const PaymentInstructionsScreen: React.FC<Props> = ({navigation}) => {
 
           launchImageLibrary(options, response => {
             if (response.assets && response.assets[0]) {
+              hideModal();
               const asset = response.assets[0];
               setUploadedFile({
                 uri: asset.uri || '',
@@ -223,31 +236,38 @@ const PaymentInstructionsScreen: React.FC<Props> = ({navigation}) => {
             }
           });
         },
+        style: 'default' as const,
       },
-    ]);
+    ];
+
+    showCustom('info', 'Upload Proof of Payment', 'Choose an option', buttons);
   };
 
   const handleSubmitPayment = async () => {
     if (!uploadedFile) {
-      Alert.alert('Error', 'Please upload proof of payment');
+      showError('Error', 'Please upload proof of payment');
       return;
     }
 
     if (isOrderExpired) {
-      Alert.alert(
+      const buttons = [
+        {
+          text: 'OK',
+          onPress: () => {
+            navigation.reset({
+              index: 0,
+              routes: [{name: 'MainTabs'}],
+            });
+          },
+          style: 'default' as const,
+        },
+      ];
+
+      showCustom(
+        'error',
         'Order Expired',
         'This order has expired. Please create a new order.',
-        [
-          {
-            text: 'OK',
-            onPress: () => {
-              navigation.reset({
-                index: 0,
-                routes: [{name: 'MainTabs'}],
-              });
-            },
-          },
-        ],
+        buttons,
       );
       return;
     }
@@ -256,20 +276,26 @@ const PaymentInstructionsScreen: React.FC<Props> = ({navigation}) => {
 
     setTimeout(() => {
       setIsSubmitting(false);
-      Alert.alert(
+
+      const buttons = [
+        {
+          text: 'OK',
+          onPress: () => {
+            hideModal();
+            navigation.reset({
+              index: 0,
+              routes: [{name: 'MainTabs'}],
+            });
+          },
+          style: 'default' as const,
+        },
+      ];
+
+      showCustom(
+        'success',
         'Payment Submitted',
         'Your payment proof has been submitted successfully. We will verify your payment within 1-2 business days.',
-        [
-          {
-            text: 'OK',
-            onPress: () => {
-              navigation.reset({
-                index: 0,
-                routes: [{name: 'MainTabs'}],
-              });
-            },
-          },
-        ],
+        buttons,
       );
     }, 2000);
   };
