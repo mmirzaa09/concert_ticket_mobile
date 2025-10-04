@@ -66,7 +66,12 @@ const createApiService = () => {
       method: options.method || 'GET',
       headers,
       timeout,
-      ...(options.body && {data: JSON.parse(options.body)}),
+      ...(options.body && {
+        data:
+          options.body instanceof FormData
+            ? options.body
+            : JSON.parse(options.body),
+      }),
     };
 
     try {
@@ -225,6 +230,21 @@ const createApiService = () => {
         API_ENDPOINTS.ORDERS_BY_ID_ORDER.replace(':id_order', id_order),
         {
           method: 'GET',
+        },
+        true, // requireAuth = true
+      ),
+
+    postTransactionPayment: (
+      paymentData: FormData,
+    ): Promise<ApiResponse<any>> =>
+      request<any>(
+        API_ENDPOINTS.TRANSACTION_PAYMENT,
+        {
+          method: 'POST',
+          body: paymentData,
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
         },
         true, // requireAuth = true
       ),

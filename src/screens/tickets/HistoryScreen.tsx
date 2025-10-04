@@ -38,7 +38,7 @@ const HistoryScreen: React.FC<Props> = ({navigation}) => {
   const dispatch = useAppDispatch();
   const {userOrders, loading} = useAppSelector(state => state.order);
   const {state} = useAuth();
-  const {showError} = useGlobalModalContext();
+  const {showError, showInfo} = useGlobalModalContext();
 
   useEffect(() => {
     dispatch(getOrdersByUserId(state.user.id));
@@ -50,6 +50,8 @@ const HistoryScreen: React.FC<Props> = ({navigation}) => {
         return COLORS.success;
       case 'pending':
         return COLORS.textMuted;
+      case 'waiting_approve':
+        return COLORS.warning;
       case 'expired':
         return COLORS.error;
       case 'cancelled':
@@ -65,6 +67,8 @@ const HistoryScreen: React.FC<Props> = ({navigation}) => {
         return 'paid';
       case 'pending':
         return 'pending';
+      case 'waiting_approve':
+        return 'Waiting Approval';
       case 'cancelled':
         return 'Cancelled';
       case 'expired':
@@ -79,6 +83,10 @@ const HistoryScreen: React.FC<Props> = ({navigation}) => {
   };
 
   const handlePendingOrderPress = async (order: (typeof userOrders)[0]) => {
+    if (order.status === 'waiting_approve') {
+      return showInfo('Thank You!', 'Your order is waiting for approval.');
+    }
+
     if (order.status === 'expired' || order.status === 'cancelled') {
       return showError('Sorry', 'Your order has been expired.');
     }
@@ -130,6 +138,9 @@ const HistoryScreen: React.FC<Props> = ({navigation}) => {
           </View>
           {item.status === 'pending' && (
             <Text style={styles.pendingHint}>Tap to complete payment</Text>
+          )}
+          {item.status === 'waiting_approve' && (
+            <Text style={styles.pendingHint}>Waiting for payment approval</Text>
           )}
         </View>
       </TouchableOpacity>

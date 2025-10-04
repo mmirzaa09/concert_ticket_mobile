@@ -21,9 +21,11 @@ import {
   selectIsOrderExpired,
   selectOrderTimeRemaining,
 } from '../../store/slices/orderSlice';
+import {uploadPaymentProof} from '../../store/slices/transactionSlice';
 import {fetchPaymentMethodsById} from '../../store/slices/paymentMethodSlice';
 import images from '../../assets';
 import {useGlobalModalContext} from '../../context/GlobalModalContext';
+import {useAuth} from '../../context/AuthContext';
 
 // Navigation types
 export type PaymentInstructionsRouteProp = RouteProp<
@@ -78,6 +80,7 @@ const PaymentInstructionsScreen: React.FC<Props> = ({navigation}) => {
   const {currentOrder} = useAppSelector(state => state.order);
   const isOrderExpired = useAppSelector(selectIsOrderExpired);
   const timeRemainingMs = useAppSelector(selectOrderTimeRemaining);
+  const {state: authState} = useAuth();
 
   // State management
   const [uploadedFile, setUploadedFile] = useState<UploadedFile | null>(null);
@@ -244,8 +247,11 @@ const PaymentInstructionsScreen: React.FC<Props> = ({navigation}) => {
   };
 
   const handleSubmitPayment = async () => {
-    if (!uploadedFile) {
-      showError('Error', 'Please upload proof of payment');
+    if (!uploadedFile || !currentOrder) {
+      showError(
+        'Error',
+        'Please upload proof of payment and ensure order details are loaded.',
+      );
       return;
     }
 
@@ -274,8 +280,18 @@ const PaymentInstructionsScreen: React.FC<Props> = ({navigation}) => {
 
     setIsSubmitting(true);
 
-    setTimeout(() => {
-      setIsSubmitting(false);
+    try {
+      const payload = {
+        id_order: currentOrder.id_order,
+        id_user: authState.user?.id,
+        payment_proof: {
+          uri: uploadedFile.uri,
+          type: uploadedFile.type,
+          name: uploadedFile.name,
+        },
+      };
+
+      await dispatch(uploadPaymentProof(payload)).unwrap();
 
       const buttons = [
         {
@@ -297,7 +313,11 @@ const PaymentInstructionsScreen: React.FC<Props> = ({navigation}) => {
         'Your payment proof has been submitted successfully. We will verify your payment within 1-2 business days.',
         buttons,
       );
-    }, 2000);
+    } catch (uploadError: any) {
+      showError('Upload Failed', uploadError || 'An unknown error occurred.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const removeUploadedFile = () => {
