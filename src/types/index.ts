@@ -8,11 +8,11 @@ export type RootStackParamList = {
   TicketPurchase: {concertId: string};
   Queue: {concertId: string};
   PaymentInstructions: {
-    paymentMethod: string;
-    orderId?: string;
+    id_method: string;
+    orderId: string;
     fromHistory?: boolean;
-    from?: string;
   };
+  QrCode: {orderId: string};
 };
 
 export type TabParamList = {

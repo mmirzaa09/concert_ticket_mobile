@@ -24,8 +24,10 @@ export type ConcertInquiryScreenRouteProp = RouteProp<
   RootStackParamList,
   'ConcertInquiry'
 >;
-export type ConcertInquiryScreenNavigationProp =
-  StackNavigationProp<RootStackParamList, 'ConcertInquiry'>;
+export type ConcertInquiryScreenNavigationProp = StackNavigationProp<
+  RootStackParamList,
+  'ConcertInquiry'
+>;
 
 interface Props {
   navigation: ConcertInquiryScreenNavigationProp;
@@ -73,7 +75,7 @@ const ConcertInquiryScreen: React.FC<Props> = ({navigation}) => {
     if (concertId) {
       dispatch(fetchConcertById(concertId));
     }
-  }, [concertId, dispatch]);
+  }, [concertId, dispatch, route.params, user]);
 
   if (loading || !selectedConcert) {
     return (

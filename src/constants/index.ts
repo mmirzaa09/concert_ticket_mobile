@@ -4,8 +4,8 @@ export const APP_CONFIG = {
   // API_BASE_URL: __DEV__
   //   ? 'http://192.168.1.9:8000'
   //   : 'https://api.queueless.com',
-  API_BASE_URL: 'http://10.10.50.82:3030/api',
-  API_IMAGE: 'http://10.10.50.82:3030/uploads/',
+  API_BASE_URL: 'http://10.162.170.183:3030/api',
+  API_IMAGE: 'http://10.162.170.183:3030/uploads/',
   API_TIMEOUT: 10000,
 };
 

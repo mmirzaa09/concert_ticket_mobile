@@ -12,6 +12,7 @@ import {
   ConcertInquiryScreen,
   PaymentScreen,
   PaymentInstructionsScreen,
+  QrCodeScreen,
 } from '../screens';
 import TabNavigator from './TabNavigator';
 
@@ -87,6 +88,13 @@ const AppNavigator: React.FC = () => {
         component={PaymentInstructionsScreen}
         options={{
           title: 'Payment Instructions',
+        }}
+      />
+      <Stack.Screen
+        name="QrCode"
+        component={QrCodeScreen}
+        options={{
+          title: 'Ticket QR Code',
         }}
       />
     </Stack.Navigator>

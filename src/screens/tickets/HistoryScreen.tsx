@@ -83,6 +83,9 @@ const HistoryScreen: React.FC<Props> = ({navigation}) => {
   };
 
   const handlePendingOrderPress = async (order: (typeof userOrders)[0]) => {
+    if (order.status === 'paid') {
+      return navigation.navigate('QrCode', {orderId: order.id_order});
+    }
     if (order.status === 'waiting_approve') {
       return showInfo('Thank You!', 'Your order is waiting for approval.');
     }

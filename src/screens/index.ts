@@ -16,3 +16,7 @@ export {default as OnboardingScreen} from './onboarding/OnboardingScreen';
 
 // Profile Screens
 export {default as ProfileScreen} from './profile/ProfileScreen';
+
+// Ticket Screens
+export {default as HistoryScreen} from './tickets/HistoryScreen';
+export {default as QrCodeScreen} from './tickets/QrCodeScreen';
