@@ -234,6 +234,15 @@ const createApiService = () => {
         true, // requireAuth = true
       ),
 
+    getPaidOrder: (id_order: string): Promise<ApiResponse<any>> =>
+      request<any>(
+        API_ENDPOINTS.ORDER_PAID.replace(':id_order', id_order),
+        {
+          method: 'GET',
+        },
+        true, // requireAuth = true
+      ),
+
     postTransactionPayment: (
       paymentData: FormData,
     ): Promise<ApiResponse<any>> =>

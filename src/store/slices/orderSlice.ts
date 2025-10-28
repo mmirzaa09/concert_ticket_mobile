@@ -1,9 +1,17 @@
 import {createSlice, createAsyncThunk} from '@reduxjs/toolkit';
 import {apiService} from '../../services/api/apiService';
 
+// Define the user interface for nested user data
+export interface OrderUser {
+  id_user: number;
+  name: string;
+  email: string;
+  phone_number: string;
+}
+
 // Define the concert interface for nested concert data
 export interface Concert {
-  id_concert: string;
+  id_concert: number;
   title: string;
   artist: string;
   venue: string;
@@ -16,15 +24,17 @@ export interface Concert {
 
 // Define the order interface based on the backend model
 export interface Order {
-  id_order?: string;
-  id_user: string;
-  id_concert: string;
+  id_order?: number;
+  id_method?: number;
+  id_user?: string | number;
+  id_concert?: string | number;
   quantity: number;
-  total_price: number;
-  status: 'pending' | 'confirmed' | 'cancelled' | 'expired';
+  total_price: number | string;
+  status: 'pending' | 'confirmed' | 'cancelled' | 'expired' | 'paid';
   reservation_expired: string;
   created_at?: string;
   updated_at?: string;
+  user?: OrderUser;
   concert?: Concert;
 }
 
@@ -126,6 +136,31 @@ export const getOrderById = createAsyncThunk(
   },
 );
 
+// Async thunk for getting paid order by ID
+export const getPaidOrder = createAsyncThunk(
+  'order/getPaidOrder',
+  async (id_order: string, {rejectWithValue}) => {
+    try {
+      const response = await apiService.getPaidOrder(id_order);
+
+      if (response.success && response.data) {
+        return response.data;
+      } else {
+        return rejectWithValue(
+          response.message || 'Failed to fetch paid order',
+        );
+      }
+    } catch (error: any) {
+      console.error('Error fetching paid order:', error);
+      return rejectWithValue(
+        error.response?.data?.message ||
+          error.message ||
+          'Failed to fetch paid order',
+      );
+    }
+  },
+);
+
 // Create the slice
 const orderSlice = createSlice({
   name: 'order',
@@ -199,6 +234,21 @@ const orderSlice = createSlice({
         state.error = null;
       })
       .addCase(getOrderById.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+        state.currentOrder = null;
+      })
+      // Get paid order
+      .addCase(getPaidOrder.pending, state => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(getPaidOrder.fulfilled, (state, action) => {
+        state.loading = false;
+        state.currentOrder = action.payload;
+        state.error = null;
+      })
+      .addCase(getPaidOrder.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
         state.currentOrder = null;
