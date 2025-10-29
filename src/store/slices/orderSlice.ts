@@ -103,7 +103,7 @@ export const getOrdersByUserId = createAsyncThunk(
         return rejectWithValue(response.message || 'Failed to fetch orders');
       }
     } catch (error: any) {
-      console.error('Error fetching orders by user ID:', error);
+      console.log('Error fetching orders by user ID:', error);
       return rejectWithValue(
         error.response?.data?.message ||
           error.message ||

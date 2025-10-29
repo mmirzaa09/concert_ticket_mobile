@@ -1,4 +1,4 @@
-import React, {useEffect} from 'react';
+import React, {useEffect, useCallback} from 'react';
 import {
   View,
   Text,
@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   Image,
   SafeAreaView,
+  RefreshControl,
 } from 'react-native';
 import {BottomTabNavigationProp} from '@react-navigation/bottom-tabs';
 import {CompositeNavigationProp} from '@react-navigation/native';
@@ -41,6 +42,10 @@ const HistoryScreen: React.FC<Props> = ({navigation}) => {
   const {showError, showInfo} = useGlobalModalContext();
 
   useEffect(() => {
+    dispatch(getOrdersByUserId(state.user.id));
+  }, [dispatch, state.user.id]);
+
+  const onRefresh = useCallback(() => {
     dispatch(getOrdersByUserId(state.user.id));
   }, [dispatch, state.user.id]);
 
@@ -164,7 +169,9 @@ const HistoryScreen: React.FC<Props> = ({navigation}) => {
           keyExtractor={item => item.id_order}
           contentContainerStyle={styles.listContainer}
           showsVerticalScrollIndicator={false}
-          refreshing={loading}
+          refreshControl={
+            <RefreshControl refreshing={loading} onRefresh={onRefresh} />
+          }
         />
       ) : (
         <View style={styles.emptyState}>
